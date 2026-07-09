@@ -33,3 +33,16 @@ You only need to do this if you're modifying the plugin yourself. If you just wa
    A successful build produces `plugin/bin/Debug/net6.0/ScritchyScratchyAP.dll`, and the project's post-build step automatically copies it into `<GameDir>\BepInEx\plugins\` for you, so as long as step 1 was set correctly, there's nothing left to copy by hand.
 
 5. **Make sure the game is closed before building.** If the game (or BepInEx) is running, the post-build copy step will fail with a file-lock error (`MSB3021`) because Windows won't let the build overwrite a DLL that's currently loaded. Close the game, then build again.
+
+## Editing the apworld
+
+`apworld/__init__.py` and friends import from `worlds.AutoWorld` and `BaseClasses`, which live in the actual Archipelago source, not this repo. For your editor (e.g. VS Code + Pylance) to resolve those imports instead of showing them as unresolved:
+
+1. Clone/download the [Archipelago source](https://github.com/ArchipelagoMW/Archipelago) somewhere locally.
+2. Create `.vscode/settings.json` in this repo (I have it gitignored) with:
+   ```json
+   {
+       "python.analysis.extraPaths": ["<path-to-your-Archipelago-source>"],
+       "python.autoComplete.extraPaths": ["<path-to-your-Archipelago-source>"]
+   }
+   ```

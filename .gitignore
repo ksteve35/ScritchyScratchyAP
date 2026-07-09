@@ -12,5 +12,6 @@ save.json
 
 # Editor/OS cruft
 .vs/
+.vscode/
 *.user
 .DS_Store
