@@ -1,0 +1,16 @@
+# .NET build output
+plugin/bin/
+plugin/obj/
+
+# Python
+apworld/__pycache__/
+*.pyc
+
+# Personal / runtime data — never commit these
+save.json
+*.cfg
+
+# Editor/OS cruft
+.vs/
+*.user
+.DS_Store

@@ -1,0 +1,56 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
+    <!-- EDIT THIS to your own Scritchy Scratchy install folder before building.
+         Everything below (interop references, post-build copy) reads from this. -->
+    <GameDir>D:\SteamLibrary\steamapps\common\Scritchy Scratchy</GameDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<PackageReference Include="Archipelago.MultiClient.Net" Version="6.7.1" />
+	<PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.755" />
+	<PackageReference Include="BepInEx.Il2Cpp.TlsAdapter" Version="*" />
+    <PackageReference Include="HarmonyX" Version="2.16.1" />
+    <PackageReference Include="Il2CppInterop.Runtime" Version="1.5.1" />
+	<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(GameDir)\BepInEx\interop\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>$(GameDir)\BepInEx\interop\Il2Cppmscorlib.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(GameDir)\BepInEx\interop\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(GameDir)\BepInEx\interop\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.InputSystem">
+      <HintPath>$(GameDir)\BepInEx\interop\Unity.InputSystem.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>$(GameDir)\BepInEx\interop\UnityEngine.UIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>$(GameDir)\BepInEx\interop\Unity.TextMeshPro.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(GameDir)\BepInEx\interop\UnityEngine.TextRenderingModule.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Copy SourceFiles="$(TargetPath)"
+			  DestinationFolder="$(GameDir)\BepInEx\plugins\"
+			  OverwriteReadOnlyFiles="true"
+			  SkipUnchangedFiles="false" />
+	</Target>
+
+</Project>
