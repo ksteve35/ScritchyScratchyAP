@@ -283,6 +283,40 @@ namespace ScritchyScratchyAP
         }
     }
 
+    // Final Chance death routes through Player.DiscardTicket. Not sure which
+    // of CashOutTicket/DiscardTicket a win uses, so both are hooked. Routing
+    // is gated to Final Chance variants and the goal ticket only, so 
+    // discarding an unplayed normal tickets never falsely awards a check.
+    [HarmonyPatch(typeof(Player), nameof(Player.CashOutTicket))]
+    public class Patch_Player_CashOutTicket
+    {
+        static void Postfix(Ticket __0)
+        {
+            FinalChanceCompletionRouter.Route(__0);
+        }
+    }
+
+    [HarmonyPatch(typeof(Player), nameof(Player.DiscardTicket))]
+    public class Patch_Player_DiscardTicket
+    {
+        static void Postfix(Ticket __0)
+        {
+            FinalChanceCompletionRouter.Route(__0);
+        }
+    }
+
+    internal static class FinalChanceCompletionRouter
+    {
+        public static void Route(Ticket ticket)
+        {
+            string id = ticket?.Data?.id;
+            if (id == null) return;
+            if (!Locations.IsFinalChanceVariant(id) && !Locations.IsGoalTicket(id)) return;
+            Plugin.Log.LogInfo($"AP Tracking: Final Chance concluded, id='{id}'");
+            TrackingManager.OnTicketCashedOut(id);
+        }
+    }
+
     // Fires when the player buys a prestige perk.
     // Prefix: blocks purchase if the required AP item has not been received.
     // Postfix: sends the location check for the perk purchase.
