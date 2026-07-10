@@ -240,7 +240,7 @@ class ScritchyScratchyWorld(World):
     # what settings were used for this seed
     def fill_slot_data(self) -> Dict[str, Any]:
         return {
-            "game_version": "0.1.0",
+            "game_version": "0.1.1",
             "death_link": False,
             "jackpot_points_per_item": JACKPOT_POINTS_PER_ITEM,
         }
