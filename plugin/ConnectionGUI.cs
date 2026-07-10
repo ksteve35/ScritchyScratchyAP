@@ -143,12 +143,28 @@ namespace ScritchyScratchyAP
                 text.color = Color.white;
                 text.alignment = TextAlignmentOptions.BottomLeft;
 
+                // Dynamically-sized gray background behind the text
+                text.ForceMeshUpdate();
+                const float paddingX = 8f;
+                const float paddingY = 6f;
+                var bgGO = new GameObject("HintBackground");
+                bgGO.transform.SetParent(canvasGO.transform, false);
+                bgGO.transform.SetAsFirstSibling(); // Draw behind the text
+                var bgRect = bgGO.AddComponent<RectTransform>();
+                bgRect.anchorMin = new Vector2(0f, 0f);
+                bgRect.anchorMax = new Vector2(0f, 0f);
+                bgRect.pivot = new Vector2(0f, 0f);
+                bgRect.anchoredPosition = new Vector2(16 - paddingX, 16 - paddingY);
+                bgRect.sizeDelta = new Vector2(text.preferredWidth + paddingX * 2, text.preferredHeight + paddingY * 2);
+                var bgImage = bgGO.AddComponent<Image>();
+                bgImage.color = new Color(0.1f, 0.1f, 0.1f, 0.5f);
+
                 _hintBuilt = true;
             }
             catch (Exception ex)
             {
                 Plugin.Log.LogError($"AP: ConnectionGUI hint build failed: {ex.Message}");
-                _hintBuilt = true; // Don't retry every frame after a real failure- 
+                _hintBuilt = true; // Don't retry every frame after a real failure
             }
         }
 
