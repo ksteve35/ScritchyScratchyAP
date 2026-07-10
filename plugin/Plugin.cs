@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace ScritchyScratchyAP
 {
-    [BepInPlugin("com.yourname.scritchyscratchyap", "Scritchy Scratchy AP", "0.1.0")]
+    [BepInPlugin("com.yourname.scritchyscratchyap", "Scritchy Scratchy AP", "0.1.1")]
     public class Plugin : BasePlugin
     {
         public static new BepInEx.Logging.ManualLogSource Log;
