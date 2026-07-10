@@ -55,6 +55,16 @@ class ScritchyScratchyWorld(World):
         if data.address is not None
     }
 
+    # Early Items
+    # Only Tin and Aluminum, the two coins actually needed to progress past
+    # Catalog 1/2. Marking all 8 (or even 6) coins early was tried and broke
+    # generation entirely — it crammed too many items into the small sphere-0
+    # location pool (~7 locations) and starved out other early-critical items
+    # like Unlock Two Win. Two items leaves plenty of room.
+    def generate_early(self) -> None:
+        for coin in ["Tin Coin", "Aluminum Coin"]:
+            self.multiworld.early_items[self.player][f"Unlock {coin}"] = 1
+
     # Region Creation
     def create_regions(self) -> None:
         regions: Dict[str, Region] = {}
