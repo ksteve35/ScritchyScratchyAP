@@ -11,8 +11,11 @@ namespace ScritchyScratchyAP
     {
         static void Postfix(Ticket ticket)
         {
-            string sharedId = ticket.Data.SharedID;
-            TrackingManager.OnTicketCashedOut(sharedId);
+            // Data.SharedID turns into a bare "Super" for every Super ticket,
+            // forgetting which base ticket it was. Data.id carries the full
+            // SharedID exactly for non-Super tickets, so use it.
+            string id = ticket.Data.id;
+            TrackingManager.OnTicketCashedOut(id);
             ItemApplicator.OnTicketCashedForStreaks();
         }
     }
