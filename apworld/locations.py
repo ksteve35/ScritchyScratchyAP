@@ -75,9 +75,9 @@ FINAL_CHANCE_CASH_OUT_LOCATIONS = [
 # Mirrors the in-game catalog unlock order.
 # Used for region assignments and entrance rules in __init__.py.
 CATALOG_1_TICKETS = ["Two Win", "Mini Scratch", "Apple Tree", "Quick Cash", "Lucky Cat"]
-CATALOG_2_TICKETS = ["Sand Dollars", "Scratch My Back", "Snake Eyes", "The Bomb", "Bank Break"]
-CATALOG_3_TICKETS = ["Xmas Countdown", "Thrift Store", "Berry Picking", "Trick or Treat"]
-CATALOG_4_TICKETS = ["Slot Machine", "To the Moon", "Booster Pack", "Final Chance"]
+CATALOG_2_TICKETS = ["Sand Dollars", "Scratch My Back", "Snake Eyes", "The Bomb"]
+CATALOG_3_TICKETS = ["Bank Break", "Xmas Countdown", "Thrift Store", "Berry Picking"]
+CATALOG_4_TICKETS = ["Trick or Treat", "Slot Machine", "To the Moon", "Booster Pack", "Final Chance"]
 
 # Upgrades
 SINGLE_PURCHASE_UPGRADES = [
