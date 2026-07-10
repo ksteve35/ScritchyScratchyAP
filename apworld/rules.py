@@ -100,10 +100,17 @@ def set_rules(world: World) -> None:
     # below instead, since they're keyed by dedicated location name, not a shared
     # "Cash Out {ticket} {threshold}" pattern.
 
+    # Populated later by the coin purchase loop below. Declared here so coin_req_met
+    # can reference it.
+    _coin_owned_rule: dict = {}
+
     def coin_req_met(coin: str, level: int, state: CollectionState) -> bool:
-        if coin != "Base Coin" and not has(f"Unlock {coin}", state):
-            return False
-        if level > 0 and state.count(f"Progressive Scratch Size {coin}", player) < level:
+        if coin != "Base Coin":
+            owned_rule = _coin_owned_rule.get(coin)
+            if owned_rule is None or not owned_rule(state):
+                return False
+        if level > 0 and state.count(f"Progressive Scratch Size {coin}",
+                                     player) < level:
             return False
         return True
 
@@ -199,8 +206,13 @@ def set_rules(world: World) -> None:
             lambda state, u=upgrade: has(f"Unlock {u}", state))
 
     # Coin Purchase Prerequisites
-    # Each coin tier requires both Scratch Size progressive items for the
-    # current tier to be received before the next coin can be bought.
+    # Each coin tier requires its own unlock, both Scratch Size progressive
+    # items for the previous tier, and everything the previous coin itself
+    # required.
+    _coin_order = [
+        "Tin Coin", "Aluminum Coin", "Copper Coin", "Bronze Coin", "Iron Coin",
+        "Steel Coin", "Titanium Coin", "Tungsten Coin"
+    ]
     _coin_scratch_prerequisites = {
         "Tin Coin":      "Scratch Size Base Coin",
         "Aluminum Coin": "Scratch Size Tin Coin",
@@ -211,12 +223,16 @@ def set_rules(world: World) -> None:
         "Titanium Coin": "Scratch Size Steel Coin",
         "Tungsten Coin": "Scratch Size Titanium Coin",
     }
-    for coin, ss_base in _coin_scratch_prerequisites.items():
-        set_rule_safe(f"Buy {coin}",
-            lambda state, c=coin, ss=ss_base: (
-                has(f"Unlock {c}", state) and
-                state.count(f"Progressive {ss}", player) >= 2
-            ))
+    previous_coin_rule = lambda state: True  # Base Coin is always owned
+    for coin in _coin_order:
+        ss_base = _coin_scratch_prerequisites[coin]
+        prev_rule = previous_coin_rule
+        coin_rule = lambda state, c=coin, ss=ss_base, prev=prev_rule: (prev(
+            state) and has(f"Unlock {c}", state) and state.count(
+                f"Progressive {ss}", player) >= 2)
+        set_rule_safe(f"Buy {coin}", coin_rule)
+        _coin_owned_rule[coin] = coin_rule
+        previous_coin_rule = coin_rule
 
     # Scratch Size Upgrade Location Rules
     # Base Coin: always accessible.
