@@ -545,12 +545,11 @@ namespace ScritchyScratchyAP
             { "Final Chance",    1e30 },                  // 1 No
         };
 
-        // Scales cash injections to whatever the player can actually see and buy right
-        // now, like when the ticket catalog exists in the shop and isn't locked, rather
-        // than whatever the most expensive AP-received ticket happens to be. AP items
-        // can arrive well before their catalog naturally opens, so scaling off "received"
-        // alone could price an injection off a Catalog 4 ticket's cost while the player
-        // is still stuck in Catalog 1 with nothing that expensive to spend it on.
+        // Scales cash injections to the most expensive ticket that is both AP-received
+        // and visible in the shop this run/prestige, not whatever the most expensive
+        // AP-received ticket happens to be since AP items can arrive well before their
+        // catalog naturally opens, pricing an injection off a Catalog 4 ticket while
+        // the player is still stuck in Catalog 1.
         private static double MostExpensiveAccessibleTicketCost()
         {
             double maxCost = 1.0; // Day Job ($1), always accessible baseline
@@ -558,10 +557,12 @@ namespace ScritchyScratchyAP
             var ticketShop = UnityEngine.Object.FindObjectOfType<TicketShop>(true);
             if (ticketShop == null) return maxCost;
 
+            var received = TrackingManager.GetReceivedItemCounts();
+
             foreach (var kvp in TicketCosts)
             {
-                if (!ticketShop.shopPanelDict.TryGetValue(kvp.Key, out ShopPanel panel)) continue;
-                if (panel.IsLocked) continue;
+                if (!received.TryGetValue($"Unlock {kvp.Key}", out int cnt) || cnt < 1) continue;
+                if (!ticketShop.shopPanelDict.ContainsKey(kvp.Key)) continue;
                 if (kvp.Value > maxCost) maxCost = kvp.Value;
             }
             return maxCost;
