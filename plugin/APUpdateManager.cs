@@ -114,22 +114,12 @@ namespace ScritchyScratchyAP
                         Plugin.ConfigSlotName.Value, Plugin.ConfigPassword.Value).WrapToIl2Cpp());
                 }
 
-                // F7: instantly grant 200 Nonillion money (testing shortcut).
+                // F7: instantly grant the same amount a real "Small Cash Injection" item would (testing shortcut).
                 if (kb.f7Key.wasPressedThisFrame)
                 {
                     try
                     {
-                        var wallet = UnityEngine.Object.FindObjectOfType<PlayerWallet>();
-                        if (wallet == null)
-                        {
-                            Plugin.Log.LogWarning("AP: F7 — PlayerWallet not found.");
-                        }
-                        else
-                        {
-                            const double amount = 200e30; // 200 Nonillion
-                            wallet.AddMoney(amount, "AP Debug");
-                            Plugin.Log.LogInfo($"AP: F7 — granted ${amount} to wallet.");
-                        }
+                        ItemApplicator.DebugGrantSmallCashInjection();
                     }
                     catch (Exception ex)
                     {
