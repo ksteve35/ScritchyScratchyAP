@@ -574,6 +574,13 @@ namespace ScritchyScratchyAP
             ApplyCash(ticketCost * multiplier);
         }
 
+        // Testing shortcut for the F7 hotkey. Grants the same
+        // amount a "Small Cash Injection" item would right now.
+        public static void DebugGrantSmallCashInjection()
+        {
+            ApplyScaledCash(10.0);
+        }
+
         private static void ApplyCash(double amount)
         {
             var wallet = UnityEngine.Object.FindObjectOfType<PlayerWallet>();
