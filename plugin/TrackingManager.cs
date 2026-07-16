@@ -154,7 +154,8 @@ namespace ScritchyScratchyAP
             Plugin.Log.LogInfo($"AP Tracking: {rawSharedId} cashed out x{count}");
 
             // Check thresholds and send any newly reached ones
-            foreach (int threshold in Locations.TicketCashOutThresholds)
+            var thresholds = isSuper ? Locations.SuperTicketCashOutThresholds : Locations.TicketCashOutThresholds;
+            foreach (int threshold in thresholds)
             {
                 if (count >= threshold)
                 {

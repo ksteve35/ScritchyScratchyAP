@@ -58,6 +58,7 @@ SUPER_TICKETS = [
 ]
 
 TICKET_THRESHOLDS = [1, 5, 10, 15]
+SUPER_TICKET_THRESHOLDS = [1]
 
 # Final Chance variants each get one dedicated, one-time location instead of
 # sharing a combined cash-out counter/threshold like every other ticket, fires
@@ -443,7 +444,7 @@ def build_location_table() -> dict[str, SSLocationData]:
     # Super ticket cash-out thresholds, all in Late Prestige (require Scratch Luck)
     super_base = BASE_ID + 200
     for i, ticket in enumerate(SUPER_TICKETS):
-        for j, threshold in enumerate(TICKET_THRESHOLDS):
+        for j, threshold in enumerate(SUPER_TICKET_THRESHOLDS):
             name = f"Cash Out {ticket} {threshold}"
             addr = super_base + (i * 10) + j
             table[name] = SSLocationData(region="Late Prestige", address=addr)
