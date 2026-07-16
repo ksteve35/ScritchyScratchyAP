@@ -341,12 +341,20 @@ namespace ScritchyScratchyAP
     [HarmonyPatch(typeof(PrestigeUpgradePanel), nameof(PrestigeUpgradePanel.Buy))]
     public class Patch_PrestigePerkBuy
     {
-        static bool Prefix(PrestigeUpgradePanel __instance)
+        // Buy() has no separate TryBuy gate, it silently fails internally if the
+        // player can't afford it. Catch the real buy count from the game's
+        // own save data before the call so Postfix can tell whether this click
+        // actually resulted in a purchase.
+        static bool Prefix(PrestigeUpgradePanel __instance, out int __state)
         {
+            string perkId = __instance.Data.id;
+            __state = 0;
+            try { __state = SaveData.Current?.GetPrestigeUpgradeBuyCount(perkId) ?? 0; }
+            catch { }
+
             if (!ArchipelagoManager.Connected) return true;
             if (TrackingManager.IsApplyingReceivedItem) return true;
 
-            string perkId = __instance.Data.id;
             var received = TrackingManager.GetReceivedItemCounts();
 
             // Block single-purchase prestige perks not yet granted by AP
@@ -365,12 +373,9 @@ namespace ScritchyScratchyAP
             {
                 if (id != perkId) continue;
                 int apLevel = received.TryGetValue($"Progressive {perkId}", out int ap) ? ap : 0;
-                int manualBought = 0;
-                try { manualBought = SaveData.Current?.GetPrestigeUpgradeBuyCount(perkId) ?? 0; }
-                catch { }
-                if (manualBought + 1 > apLevel)
+                if (__state + 1 > apLevel)
                 {
-                    Plugin.Log.LogWarning($"AP: Blocked prestige perk '{perkId}' level {manualBought + 1} — only {apLevel} AP levels received");
+                    Plugin.Log.LogWarning($"AP: Blocked prestige perk '{perkId}' level {__state + 1} — only {apLevel} AP levels received");
                     return false;
                 }
                 break;
@@ -379,7 +384,7 @@ namespace ScritchyScratchyAP
             return true;
         }
 
-        static void Postfix(PrestigeUpgradePanel __instance)
+        static void Postfix(PrestigeUpgradePanel __instance, int __state)
         {
             if (TrackingManager.IsApplyingReceivedItem) return;
             string perkId = __instance.Data.id;
@@ -388,6 +393,16 @@ namespace ScritchyScratchyAP
                 int boughtCount = 0;
                 try { boughtCount = SaveData.Current?.GetPrestigeUpgradeBuyCount(perkId) ?? 0; }
                 catch { }
+
+                // Buy() may have silently failed (insufficient jackpot points, or
+                // Prefix blocked it). Only treat this as a real purchase if the
+                // game's own count actually moved.
+                if (boughtCount <= __state)
+                {
+                    Plugin.Log.LogInfo($"AP: Prestige perk '{perkId}' Buy() click did not result in a purchase (count unchanged at {boughtCount}) — no check sent.");
+                    return;
+                }
+
                 APUpdateManager.Enqueue(() => TrackingManager.OnPrestigePerkBought(perkId, boughtCount));
             }
             catch (Exception ex)

@@ -270,12 +270,14 @@ namespace ScritchyScratchyAP
             }
 
             // Multi-level prestige perks
+            // manualBuyCount is the game's own buy count for this perk. It already
+            // reflects exactly how many levels have actually been purchased in-game
+            // this respec cycle. Resets to 0 by the player respeccing.
             foreach (var (id, max) in Locations.PrestigeMultiPerks)
             {
                 if (id != perkId) continue;
-                int apLevel = _data.ReceivedItemCounts.TryGetValue($"Progressive {perkId}", out int ap) ? ap : 0;
-                int combinedLevel = Math.Min(apLevel + manualBuyCount, max);
-                for (int l = 1; l <= combinedLevel; l++)
+                int level = Math.Min(manualBuyCount, max);
+                for (int l = 1; l <= level; l++)
                     TrySendCheck($"Buy Prestige Perk {perkId} Level {l}");
                 Save();
                 return;
