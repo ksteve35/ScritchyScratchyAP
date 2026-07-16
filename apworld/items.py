@@ -45,17 +45,16 @@ PROGRESSIVE_ITEM_COUNTS = {
     "Progressive Scratch Luck":         45,
     "Progressive Buying Speed":         10,
     "Progressive Warp Speed":            3,
-    # Require base gadget unlock, halved so useless-early items don't dominate
-    # early checks. Players manually buy the remaining levels at normal prices.
-    "Progressive Scratch Bot Speed":    15,  # MaxLevel=30
-    "Progressive Scratch Bot Capacity":  5,  # MaxLevel=10
-    "Progressive Scratch Bot Strength": 10,  # MaxLevel=20
-    "Progressive Fan Speed":             3,  # MaxLevel=5
-    "Progressive Fan Battery":           3,  # MaxLevel=5
-    "Progressive Mundo Speed":           5,  # MaxLevel=10
-    "Progressive Spell Charge Speed":    5,  # MaxLevel=10
-    "Progressive Timer Capacity":        5,  # MaxLevel=10
-    "Progressive Timer Charge":          5,  # MaxLevel=10
+    # Require base gadget unlock. Full count in pool, every level is AP-gated.
+    "Progressive Scratch Bot Capacity": 10,
+    "Progressive Scratch Bot Speed":    30,
+    "Progressive Scratch Bot Strength": 20,
+    "Progressive Fan Speed":             5,
+    "Progressive Fan Battery":           5,
+    "Progressive Mundo Speed":          10,
+    "Progressive Spell Charge Speed":   10,
+    "Progressive Timer Capacity":       10,
+    "Progressive Timer Charge":         10,
     # Scratch Size: 2 levels per coin tier
     "Progressive Scratch Size Base Coin":      2,
     "Progressive Scratch Size Tin Coin":       2,
