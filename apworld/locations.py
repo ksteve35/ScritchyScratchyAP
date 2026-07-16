@@ -128,12 +128,10 @@ MULTI_LEVEL_UPGRADES = [
 ]
 
 # Prestige Perks
-PRESTIGE_LOCATION_COUNT = 5  # Number of prestige event check locations
+PRESTIGE_LOCATION_COUNT = 3  # Number of prestige event check locations
 
 # Single-purchase prestige perks
 PRESTIGE_SINGLE_PERKS = [
-    "Challenges",
-    "Night Market",
     "Starter Kit",
     "Electric Fan",
     "Air Condition",
@@ -307,8 +305,6 @@ _SCRATCH_SIZE_REGION: dict[str, str] = {
 
 _PRESTIGE_PERK_REGION: dict[str, str] = {
     # Roots and depth-1 nodes, Early Prestige
-    "Challenges":             "Early Prestige",
-    "Night Market":           "Early Prestige",
     "Starter Kit":            "Early Prestige",
     "Jackpot Power":          "Early Prestige",
     "Tool Belt":              "Early Prestige",
