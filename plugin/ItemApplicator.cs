@@ -207,23 +207,42 @@ namespace ScritchyScratchyAP
             // Gadget sub-upgrades, lock if base gadget not yet received.
             if (shop != null)
             {
-                foreach (var kvp in Locations.MultiLevelUpgradePrerequisites)
+                foreach (var (upgradeId, max) in Locations.MultiLevelUpgrades)
                 {
-                    if (!shop.shopPanelDict.TryGetValue(kvp.Key, out ShopPanel panel)) continue;
-                    bool hasPrereq = received.TryGetValue($"Unlock {kvp.Value}", out int cnt) && cnt >= 1;
-                    if (!hasPrereq && !panel.IsLocked)
+                    string panelId = upgradeId.StartsWith("Scratch Size ")
+                        ? "Scratch Size_" + upgradeId.Substring("Scratch Size ".Length)
+                        : upgradeId;
+                    if (!shop.shopPanelDict.TryGetValue(panelId, out ShopPanel panel)) continue;
+
+                    bool missingGadget = Locations.MultiLevelUpgradePrerequisites.TryGetValue(panelId, out string reqGadget)
+                        && !(received.TryGetValue($"Unlock {reqGadget}", out int gc) && gc >= 1);
+
+                    int cycleLevel = TrackingManager.GetProgressiveCycleLevel(upgradeId) + 1;
+                    int receivedCount = received.TryGetValue($"Progressive {upgradeId}", out int pc) ? pc : 0;
+                    // Only the first ProgressiveGatedLevels[upgradeId] levels are AP-gated
+                    // (gated gadget upgrades have half their MaxLevel in the pool). Beyond
+                    // that, levels are free normal-priced buys, never locked for this reason.
+                    int gatedLevels = Locations.ProgressiveGatedLevels.TryGetValue(upgradeId, out int gl) ? gl : max;
+                    bool missingProgressive = cycleLevel <= gatedLevels && cycleLevel > receivedCount;
+
+                    bool shouldBeLocked = missingGadget || missingProgressive;
+                    if (shouldBeLocked == panel.IsLocked) continue;
+
+                    try
                     {
-                        if (_loggedLocks.Add($"gadget:{kvp.Key}"))
-                            Plugin.Log.LogInfo($"AP ItemApplicator: Locking gadget upgrade '{kvp.Key}' (requires Unlock {kvp.Value})");
-                        try { panel.SetLocked(true); }
-                        catch (Exception ex)
+                        panel.SetLocked(shouldBeLocked);
+                        if (shouldBeLocked && _loggedLocks.Add($"progressive:{upgradeId}"))
                         {
-                            Plugin.Log.LogError($"AP ItemApplicator: SetLocked threw for '{kvp.Key}': {ex.Message}");
+                            string reason = missingGadget ? $"requires Unlock {reqGadget}" : $"level {cycleLevel} needs {cycleLevel} received, has {receivedCount}";
+                            Plugin.Log.LogInfo($"AP ItemApplicator: Locking progressive '{upgradeId}' ({reason})");
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        Plugin.Log.LogError($"AP ItemApplicator: SetLocked threw for '{upgradeId}': {ex.Message}");
                     }
                 }
             }
-
         }
 
         // Applies a single item at the given cumulative received count.

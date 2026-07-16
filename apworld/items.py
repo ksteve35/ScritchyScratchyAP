@@ -45,17 +45,16 @@ PROGRESSIVE_ITEM_COUNTS = {
     "Progressive Scratch Luck":         45,
     "Progressive Buying Speed":         10,
     "Progressive Warp Speed":            3,
-    # Require base gadget unlock, halved so useless-early items don't dominate
-    # early checks. Players manually buy the remaining levels at normal prices.
-    "Progressive Scratch Bot Speed":    15,  # MaxLevel=30
-    "Progressive Scratch Bot Capacity":  5,  # MaxLevel=10
-    "Progressive Scratch Bot Strength": 10,  # MaxLevel=20
-    "Progressive Fan Speed":             3,  # MaxLevel=5
-    "Progressive Fan Battery":           3,  # MaxLevel=5
-    "Progressive Mundo Speed":           5,  # MaxLevel=10
-    "Progressive Spell Charge Speed":    5,  # MaxLevel=10
-    "Progressive Timer Capacity":        5,  # MaxLevel=10
-    "Progressive Timer Charge":          5,  # MaxLevel=10
+    # Require base gadget unlock. Full count in pool, every level is AP-gated.
+    "Progressive Scratch Bot Capacity": 10,
+    "Progressive Scratch Bot Speed":    30,
+    "Progressive Scratch Bot Strength": 20,
+    "Progressive Fan Speed":             5,
+    "Progressive Fan Battery":           5,
+    "Progressive Mundo Speed":          10,
+    "Progressive Spell Charge Speed":   10,
+    "Progressive Timer Capacity":       10,
+    "Progressive Timer Charge":         10,
     # Scratch Size: 2 levels per coin tier
     "Progressive Scratch Size Base Coin":      2,
     "Progressive Scratch Size Tin Coin":       2,
@@ -142,16 +141,16 @@ item_table: dict[str, SSItemData] = {
     # Each item received advances the upgrade by one level.
     # Added to the pool once per upgrade level.
     "Progressive Scratch Luck":         SSItemData(ItemClassification.progression, ItemType.PROGRESSIVE, ITEM_BASE + 200),
-    "Progressive Scratch Bot Speed":    SSItemData(ItemClassification.useful, ItemType.PROGRESSIVE, ITEM_BASE + 201),
-    "Progressive Scratch Bot Capacity": SSItemData(ItemClassification.useful, ItemType.PROGRESSIVE, ITEM_BASE + 202),
-    "Progressive Scratch Bot Strength": SSItemData(ItemClassification.useful, ItemType.PROGRESSIVE, ITEM_BASE + 203),
-    "Progressive Fan Speed":            SSItemData(ItemClassification.useful, ItemType.PROGRESSIVE, ITEM_BASE + 204),
-    "Progressive Fan Battery":          SSItemData(ItemClassification.useful, ItemType.PROGRESSIVE, ITEM_BASE + 205),
-    "Progressive Mundo Speed":          SSItemData(ItemClassification.useful, ItemType.PROGRESSIVE, ITEM_BASE + 206),
-    "Progressive Spell Charge Speed":   SSItemData(ItemClassification.useful, ItemType.PROGRESSIVE, ITEM_BASE + 207),
-    "Progressive Buying Speed":         SSItemData(ItemClassification.useful, ItemType.PROGRESSIVE, ITEM_BASE + 208),
-    "Progressive Timer Capacity":       SSItemData(ItemClassification.useful, ItemType.PROGRESSIVE, ITEM_BASE + 209),
-    "Progressive Timer Charge":         SSItemData(ItemClassification.useful, ItemType.PROGRESSIVE, ITEM_BASE + 210),
+    "Progressive Scratch Bot Speed":    SSItemData(ItemClassification.progression, ItemType.PROGRESSIVE, ITEM_BASE + 201),
+    "Progressive Scratch Bot Capacity": SSItemData(ItemClassification.progression, ItemType.PROGRESSIVE, ITEM_BASE + 202),
+    "Progressive Scratch Bot Strength": SSItemData(ItemClassification.progression, ItemType.PROGRESSIVE, ITEM_BASE + 203),
+    "Progressive Fan Speed":            SSItemData(ItemClassification.progression, ItemType.PROGRESSIVE, ITEM_BASE + 204),
+    "Progressive Fan Battery":          SSItemData(ItemClassification.progression, ItemType.PROGRESSIVE, ITEM_BASE + 205),
+    "Progressive Mundo Speed":          SSItemData(ItemClassification.progression, ItemType.PROGRESSIVE, ITEM_BASE + 206),
+    "Progressive Spell Charge Speed":   SSItemData(ItemClassification.progression, ItemType.PROGRESSIVE, ITEM_BASE + 207),
+    "Progressive Buying Speed":         SSItemData(ItemClassification.progression, ItemType.PROGRESSIVE, ITEM_BASE + 208),
+    "Progressive Timer Capacity":       SSItemData(ItemClassification.progression, ItemType.PROGRESSIVE, ITEM_BASE + 209),
+    "Progressive Timer Charge":         SSItemData(ItemClassification.progression, ItemType.PROGRESSIVE, ITEM_BASE + 210),
     "Progressive Warp Speed":           SSItemData(ItemClassification.progression, ItemType.PROGRESSIVE, ITEM_BASE + 211),
     # Scratch Size: 2 levels per coin tier, gate the next coin tier, so must be progression
     "Progressive Scratch Size Base Coin":      SSItemData(ItemClassification.progression, ItemType.PROGRESSIVE, ITEM_BASE + 220),

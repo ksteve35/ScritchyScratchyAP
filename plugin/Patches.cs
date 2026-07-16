@@ -135,6 +135,24 @@ namespace ScritchyScratchyAP
                 // be next in the global backlog even though the player is nowhere near there.
                 int cycleLevel = TrackingManager.GetProgressiveCycleLevel(apId) + 1;
                 if (cycleLevel > max) cycleLevel = max;
+
+                // Block buying past what AP has actually granted. Received counts are
+                // lifetime totals, while cycleLevel resets to 0 each prestige, so once
+                // a level has been unlocked once it stays freely re-buyable every future
+                // cycle.
+                //
+                // Gated gadget upgrades only have HALF their real MaxLevel in the AP pool.
+                // Levels beyond the pool count are intentionally unrestricted, normal-priced
+                // manual buys.
+                int gatedLevels = Locations.ProgressiveGatedLevels.TryGetValue(apId, out int gl) ? gl : max;
+                int receivedProgressiveCount = received.TryGetValue($"Progressive {apId}", out int pc) ? pc : 0;
+                if (cycleLevel <= gatedLevels && cycleLevel > receivedProgressiveCount)
+                {
+                    Plugin.Log.LogWarning($"AP: Blocked upgrade '{id}' level {cycleLevel} — only {receivedProgressiveCount} 'Progressive {apId}' received");
+                    __result = false;
+                    return false;
+                }
+
                 string levelCheck = $"Buy {apId} Level {cycleLevel}";
 
                 ShopBuyPending.PendingApId = apId;
