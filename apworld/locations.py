@@ -128,7 +128,7 @@ MULTI_LEVEL_UPGRADES = [
 ]
 
 # Prestige Perks
-PRESTIGE_LOCATION_COUNT = 5  # Number of prestige event check locations
+PRESTIGE_LOCATION_COUNT = 3  # Number of prestige event check locations
 
 # Single-purchase prestige perks
 PRESTIGE_SINGLE_PERKS = [

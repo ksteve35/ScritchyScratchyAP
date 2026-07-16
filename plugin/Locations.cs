@@ -263,7 +263,7 @@ namespace ScritchyScratchyAP
         // -------------------------------------------------------
         // PRESTIGE PERKS
         // -------------------------------------------------------
-        public const int PrestigeLocationCount = 5;
+        public const int PrestigeLocationCount = 3;
 
         public static readonly string[] PrestigeSinglePerks = new[]
         {
