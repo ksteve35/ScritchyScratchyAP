@@ -64,6 +64,7 @@ namespace ScritchyScratchyAP
         };
 
         public static readonly int[] TicketCashOutThresholds = { 1, 5, 10, 15 };
+        public static readonly int[] SuperTicketCashOutThresholds = { 1 };
 
         // Final Chance variants each get one dedicated, one-time location instead of
         // sharing a combined cash-out counter/threshold like every other ticket. Fires
@@ -332,9 +333,9 @@ namespace ScritchyScratchyAP
             long superBase = BASE_ID + 200;
             for (int i = 0; i < SuperTickets.Length; i++)
             {
-                for (int j = 0; j < TicketCashOutThresholds.Length; j++)
+                for (int j = 0; j < SuperTicketCashOutThresholds.Length; j++)
                 {
-                    string name = $"Cash Out {SuperTickets[i]} {TicketCashOutThresholds[j]}";
+                    string name = $"Cash Out {SuperTickets[i]} {SuperTicketCashOutThresholds[j]}";
                     LocationIds[name] = superBase + (i * 10) + j;
                 }
             }

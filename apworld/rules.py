@@ -1,6 +1,6 @@
 ﻿from worlds.AutoWorld import World
 from BaseClasses import CollectionState
-from .locations import (SUPER_TICKETS, MULTI_LEVEL_UPGRADES, TICKET_THRESHOLDS,
+from .locations import (SUPER_TICKETS, MULTI_LEVEL_UPGRADES, TICKET_THRESHOLDS, SUPER_TICKET_THRESHOLDS,
                         CATALOG_1_TICKETS, CATALOG_2_TICKETS,
                         CATALOG_3_TICKETS, CATALOG_4_TICKETS,
                         SINGLE_PURCHASE_UPGRADES,
@@ -160,7 +160,7 @@ def set_rules(world: World) -> None:
             continue  # This is the goal, not a location rule
         base_ticket = ticket.replace("Super_", "")
         coin, level = TICKET_COIN_REQUIREMENTS.get(base_ticket, (None, 0))
-        for threshold in TICKET_THRESHOLDS:
+        for threshold in SUPER_TICKET_THRESHOLDS:
             location_name = f"Cash Out {ticket} {threshold}"
             if base_ticket == "Day Job":
                 # Day Job has no unlock item, super variant only needs Scratch Luck
