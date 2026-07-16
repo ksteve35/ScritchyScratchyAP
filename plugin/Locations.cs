@@ -267,8 +267,6 @@ namespace ScritchyScratchyAP
 
         public static readonly string[] PrestigeSinglePerks = new[]
         {
-            "Challenges",
-            "Night Market",
             "Starter Kit",
             "Electric Fan",
             "Air Condition",
