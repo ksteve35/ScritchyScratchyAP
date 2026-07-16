@@ -170,8 +170,6 @@ item_table: dict[str, SSItemData] = {
     "Jackpot Points":                    SSItemData(ItemClassification.filler,      ItemType.MONEY,      ITEM_BASE + 501),
 
     # Single-purchase prestige perks, "Unlock X" authorises the player to buy perk X with JP
-    "Unlock Challenges":                 SSItemData(ItemClassification.progression, ItemType.UPGRADE,    ITEM_BASE + 510),
-    "Unlock Night Market":               SSItemData(ItemClassification.progression, ItemType.UPGRADE,    ITEM_BASE + 511),
     "Unlock Starter Kit":                SSItemData(ItemClassification.progression, ItemType.UPGRADE,    ITEM_BASE + 512),
     "Unlock Electric Fan":               SSItemData(ItemClassification.progression, ItemType.UPGRADE,    ITEM_BASE + 513),
     "Unlock Air Condition":              SSItemData(ItemClassification.progression, ItemType.UPGRADE,    ITEM_BASE + 514),

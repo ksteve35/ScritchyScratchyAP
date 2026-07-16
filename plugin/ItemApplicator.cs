@@ -48,8 +48,6 @@ namespace ScritchyScratchyAP
         // Maps prestige perk ID strings to their PerkType enum values
         public static readonly Dictionary<string, PerkType> PerkTypeByName = new()
         {
-            { "Challenges",            PerkType.Challenges },
-            { "Night Market",          PerkType.NightMarket },
             { "Starter Kit",           PerkType.StarterKit },
             { "Jackpot Power",         PerkType.JackpotPower },
             { "Tool Belt",             PerkType.ToolBelt },
