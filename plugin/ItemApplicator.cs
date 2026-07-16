@@ -564,11 +564,18 @@ namespace ScritchyScratchyAP
             { "Final Chance",    1e30 },                  // 1 No
         };
 
-        // Scales cash injections to the most expensive ticket that is both AP-received
-        // and visible in the shop this run/prestige, not whatever the most expensive
-        // AP-received ticket happens to be since AP items can arrive well before their
-        // catalog naturally opens, pricing an injection off a Catalog 4 ticket while
-        // the player is still stuck in Catalog 1.
+        // Which catalog (1-4) each ticket belongs to, mirrors apworld's
+        // CATALOG_N_TICKETS groupings exactly.
+        private static readonly Dictionary<string, int> TicketCatalog = new()
+        {
+            { "Two Win",         1 }, { "Mini Scratch", 1 }, { "Apple Tree", 1 }, { "Quick Cash", 1 }, { "Lucky Cat", 1 },
+            { "Sand Dollars",    2 }, { "Scratch My Back", 2 }, { "Snake Eyes", 2 }, { "The Bomb", 2 },
+            { "Bank Break",      3 }, { "Xmas Countdown", 3 }, { "Thrift Store", 3 }, { "Berry Picking", 3 },
+            { "Trick or Treat",  4 }, { "Slot Machine", 4 }, { "To the Moon", 4 }, { "Booster Pack", 4 }, { "Final Chance", 4 },
+        };
+
+        // Scales cash injections to the most expensive ticket that is both
+        // AP-received and reachable in the player's CURRENT prestige cycle
         private static double MostExpensiveAccessibleTicketCost()
         {
             double maxCost = 1.0; // Day Job ($1), always accessible baseline
@@ -577,11 +584,12 @@ namespace ScritchyScratchyAP
             if (ticketShop == null) return maxCost;
 
             var received = TrackingManager.GetReceivedItemCounts();
+            int activeCatalogs = ticketShop.ActiveCatalogs;
 
             foreach (var kvp in TicketCosts)
             {
                 if (!received.TryGetValue($"Unlock {kvp.Key}", out int cnt) || cnt < 1) continue;
-                if (!ticketShop.shopPanelDict.ContainsKey(kvp.Key)) continue;
+                if (!TicketCatalog.TryGetValue(kvp.Key, out int catalog) || catalog > activeCatalogs) continue;
                 if (kvp.Value > maxCost) maxCost = kvp.Value;
             }
             return maxCost;
