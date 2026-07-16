@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -72,31 +73,7 @@ namespace ScritchyScratchyAP
                 // F5: instantly cash out the current ticket (testing shortcut)
                 if (kb.f5Key.wasPressedThisFrame)
                 {
-                    try
-                    {
-                        var scratching = UnityEngine.Object.FindObjectOfType<PlayerScratching>(true);
-                        var ticket = scratching?.CurrentTicket;
-                        if (ticket == null)
-                        {
-                            Plugin.Log.LogWarning("AP: F5 — no active ticket.");
-                        }
-                        else
-                        {
-                            ticket.AllScratched = true;
-                            ticket.AutoScratched = true;
-                            ticket.ShowCashOutButton(true);
-                            // Try button click first, fall back to invoking the OnCashedOut action directly
-                            if (ticket.cashOutButton != null)
-                                ticket.cashOutButton.onClick.Invoke();
-                            else
-                                ticket.OnCashedOut?.Invoke();
-                            Plugin.Log.LogInfo("AP: F5 — instant cash-out triggered.");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Plugin.Log.LogError($"AP: F5 instant scratch failed: {ex.Message}");
-                    }
+                    InstantCashOutCurrentTicket("F5");
                 }
 
                 // F6: wipe AP save.json and reset all in-memory tracking (testing shortcut).
@@ -129,6 +106,16 @@ namespace ScritchyScratchyAP
 
             }
 
+            // Right-clicking a ticket on the table simulates a left-click that normally
+            // picks the ticket up and opens it, then after a short delay do the same
+            // instant cash-out F5 does. Lets players open and cash out a ticket with
+            // a single right-click instead of left-click then F5.
+            var mouse = Mouse.current;
+            if (mouse != null && mouse.rightButton.wasPressedThisFrame)
+            {
+                StartCoroutine(RightClickOpenAndCashOut().WrapToIl2Cpp());
+            }
+
             // When AP progressive items are applied the shop panel level counters
             // won't update until the shop refreshes. UpdatePanelsVisibility() is safe
             // to call externally, unlike PopulateShop which rebuilds shopPanelDict
@@ -148,6 +135,53 @@ namespace ScritchyScratchyAP
                 ItemApplicator.LockUnapplied();
             }
         }
+
+        private static void InstantCashOutCurrentTicket(string source)
+        {
+            try
+            {
+                var scratching = UnityEngine.Object.FindObjectOfType<PlayerScratching>(true);
+                var ticket = scratching?.CurrentTicket;
+                if (ticket == null)
+                {
+                    Plugin.Log.LogWarning($"AP: {source} — no active ticket.");
+                }
+                else
+                {
+                    ticket.AllScratched = true;
+                    ticket.AutoScratched = true;
+                    ticket.ShowCashOutButton(true);
+                    // Try button click first, fall back to invoking the OnCashedOut action directly
+                    if (ticket.cashOutButton != null)
+                        ticket.cashOutButton.onClick.Invoke();
+                    else
+                        ticket.OnCashedOut?.Invoke();
+                    Plugin.Log.LogInfo($"AP: {source} — instant cash-out triggered.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.LogError($"AP: {source} instant scratch failed: {ex.Message}");
+            }
+        }
+
+        private IEnumerator RightClickOpenAndCashOut()
+        {
+            // Spacing mouse events a frame apart makes it read as a
+            // press then release, same as real left-clicking.
+            mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);
+            yield return null;
+            mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, UIntPtr.Zero);
+
+            yield return new WaitForSeconds(0.1f);
+            InstantCashOutCurrentTicket("Right-click");
+        }
+
+        [DllImport("user32.dll")]
+        private static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, UIntPtr dwExtraInfo);
+
+        private const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
+        private const uint MOUSEEVENTF_LEFTUP = 0x0004;
 
         private IEnumerator ReconnectCoroutine(string host, int port, string slotName, string password)
         {

@@ -6,6 +6,7 @@ from .locations import (SUPER_TICKETS, MULTI_LEVEL_UPGRADES, TICKET_THRESHOLDS,
                         SINGLE_PURCHASE_UPGRADES,
                         PRESTIGE_SINGLE_PERKS, PRESTIGE_MULTI_PERKS,
                         PRESTIGE_PERK_PREREQUISITES)
+from .items import PROGRESSIVE_ITEM_COUNTS
 
 def set_rules(world: World) -> None:
     multiworld = world.multiworld
@@ -174,7 +175,10 @@ def set_rules(world: World) -> None:
                     ))
 
     # Gadget Upgrade Rules
-    # Require the base gadget unlock before upgrading
+    # Every "Buy {upgrade} Level N" location requires having received at least N
+    # copies of "Progressive {upgrade}" from AP. This must match the runtime gate
+    # in Patch_ShopTryBuy.Prefix exactly otherwise the generator could place a
+    # progression item behind a level the player can never actually purchase.
     gadget_upgrades = {
         "Scratch Bot Speed":    "Unlock Scratch Bot",
         "Scratch Bot Capacity": "Unlock Scratch Bot",
@@ -187,14 +191,32 @@ def set_rules(world: World) -> None:
         "Timer Charge":         "Unlock Egg Timer",
         "Warp Speed":           "Unlock The Machine",
     }
-
-    for upgrade_id, required_item in gadget_upgrades.items():
-        for uid, max_level in MULTI_LEVEL_UPGRADES:
-            if uid == upgrade_id:
-                for level in range(1, max_level + 1):
-                    set_rule_safe(f"Buy {upgrade_id} Level {level}",
-                        lambda state, req=required_item: has(req, state))
-                break
+    scratch_size_coin_reqs = {
+        "Scratch Size Tin Coin":       "Unlock Tin Coin",
+        "Scratch Size Aluminum Coin":  "Unlock Aluminum Coin",
+        "Scratch Size Copper Coin":    "Unlock Copper Coin",
+        "Scratch Size Bronze Coin":    "Unlock Bronze Coin",
+        "Scratch Size Iron Coin":      "Unlock Iron Coin",
+        "Scratch Size Steel Coin":     "Unlock Steel Coin",
+        "Scratch Size Titanium Coin":  "Unlock Titanium Coin",
+        "Scratch Size Tungsten Coin":  "Unlock Tungsten Coin",
+    }
+    for upgrade_id, max_level in MULTI_LEVEL_UPGRADES:
+        required_item = gadget_upgrades.get(upgrade_id) or scratch_size_coin_reqs.get(upgrade_id)
+        # Gadget-gated upgrades only have HALF their real max_level worth of
+        # "Progressive {upgrade}" copies in the item pool. The remaining levels
+        # are meant to be freely buyable at normal price once the base gadget is
+        # unlocked. Requiring the count past the pool size would demand more copies
+        # than any seed ever contains, a guaranteed softlock, so the count check
+        # only applies up to the pool size. Levels beyond it fall back to just
+        # the gadget/coin req.
+        pool_count = PROGRESSIVE_ITEM_COUNTS.get(f"Progressive {upgrade_id}", max_level)
+        for level in range(1, max_level + 1):
+            set_rule_safe(f"Buy {upgrade_id} Level {level}",
+                lambda state, u=upgrade_id, lv=level, req=required_item, pc=pool_count: (
+                    (req is None or has(req, state)) and
+                    (lv > pc or state.count(f"Progressive {u}", player) >= lv)
+                ))
 
     # Single-Purchase Upgrade Location Rules
     # "Buy X" requires receiving "Unlock X" from AP first.
@@ -233,27 +255,6 @@ def set_rules(world: World) -> None:
         set_rule_safe(f"Buy {coin}", coin_rule)
         _coin_owned_rule[coin] = coin_rule
         previous_coin_rule = coin_rule
-
-    # Scratch Size Upgrade Location Rules
-    # Base Coin: always accessible.
-    # Other tiers: require the matching coin tier unlock from AP.
-    # Both levels share the same access rule, the Prefix patch handles
-    # sending Level 1 before Level 2 based on SentLocations order.
-    scratch_size_coin_reqs = {
-        "Scratch Size Tin Coin":       "Unlock Tin Coin",
-        "Scratch Size Aluminum Coin":  "Unlock Aluminum Coin",
-        "Scratch Size Copper Coin":    "Unlock Copper Coin",
-        "Scratch Size Bronze Coin":    "Unlock Bronze Coin",
-        "Scratch Size Iron Coin":      "Unlock Iron Coin",
-        "Scratch Size Steel Coin":     "Unlock Steel Coin",
-        "Scratch Size Titanium Coin":  "Unlock Titanium Coin",
-        "Scratch Size Tungsten Coin":  "Unlock Tungsten Coin",
-    }
-    for ss_id, coin_item in scratch_size_coin_reqs.items():
-        set_rule_safe(f"Buy {ss_id} Level 1",
-            lambda state, c=coin_item: has(c, state))
-        set_rule_safe(f"Buy {ss_id} Level 2",
-            lambda state, c=coin_item: has(c, state))
 
     # Achievement Rules
 

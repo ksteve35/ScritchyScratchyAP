@@ -176,6 +176,33 @@ namespace ScritchyScratchyAP
             ("Scratch Size Tungsten Coin", 2),
         };
 
+        // How many "Progressive {id}" copies actually exist
+        // in the AP item pool for each multi-level upgrade
+        public static readonly Dictionary<string, int> ProgressiveGatedLevels = new()
+        {
+            { "Scratch Luck",              45 },
+            { "Buying Speed",              10 },
+            { "Warp Speed",                 3 },
+            { "Scratch Bot Speed",         15 },
+            { "Scratch Bot Capacity",       5 },
+            { "Scratch Bot Strength",      10 },
+            { "Fan Speed",                  3 },
+            { "Fan Battery",                3 },
+            { "Mundo Speed",                5 },
+            { "Spell Charge Speed",         5 },
+            { "Timer Capacity",             5 },
+            { "Timer Charge",               5 },
+            { "Scratch Size Base Coin",     2 },
+            { "Scratch Size Tin Coin",      2 },
+            { "Scratch Size Aluminum Coin", 2 },
+            { "Scratch Size Copper Coin",   2 },
+            { "Scratch Size Bronze Coin",   2 },
+            { "Scratch Size Iron Coin",     2 },
+            { "Scratch Size Steel Coin",    2 },
+            { "Scratch Size Titanium Coin", 2 },
+            { "Scratch Size Tungsten Coin", 2 },
+        };
+
         // Achievements
         // All 34 achievements are locations.
         // Achievement Hunter (get all achievements) is included,
