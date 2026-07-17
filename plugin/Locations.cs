@@ -152,12 +152,14 @@ namespace ScritchyScratchyAP
         // Multi-level upgrades — one check per level from 1 to max
         // Format: (upgradeId, maxLevel)
         // Scratch Size uses Buy(-1)/Buy(1) via ApplyShopUpgradeToLevel (max=2 per coin tier)
+        // Scratch Bot Strength trimmed from 20 to 10 (matches apworld's
+        // PROGRESSIVE_ITEM_COUNTS/MULTI_LEVEL_UPGRADES).
         public static readonly (string id, int max)[] MultiLevelUpgrades =
         {
             ("Scratch Luck",              45),
             ("Scratch Bot Speed",         30),
             ("Scratch Bot Capacity",      10),
-            ("Scratch Bot Strength",      20),
+            ("Scratch Bot Strength",      10),
             ("Fan Speed",                  5),
             ("Fan Battery",                5),
             ("Mundo Speed",               10),
@@ -186,7 +188,7 @@ namespace ScritchyScratchyAP
             { "Warp Speed",                 3 },
             { "Scratch Bot Speed",         30 },
             { "Scratch Bot Capacity",      10 },
-            { "Scratch Bot Strength",      20 },
+            { "Scratch Bot Strength",      10 },
             { "Fan Speed",                  5 },
             { "Fan Battery",                5 },
             { "Mundo Speed",               10 },
@@ -245,26 +247,9 @@ namespace ScritchyScratchyAP
             "Max out skill tree",
             "Achievement Hunter",
         };
-
-        // -------------------------------------------------------
-        // Location ID Table
-        // Generated from the arrays above with a fixed ID scheme:
-        //
-        // BASE_ID + 0    : base ticket cash-out locations  (19 tickets × 10 slots = 0–189)
-        // BASE_ID + 200  : super ticket cash-out locations (19 tickets × 10 slots = 200–389)
-        // BASE_ID + 400  : single-purchase upgrade locations (400–417)
-        // BASE_ID + 600  : multi-level upgrade locations, one per level (600–785),
-        //                  includes Scratch Size (9 × 2 = 18 levels, offsets 168–185)
-        // BASE_ID + 900  : achievement locations (900–933)
-        //
-        // Each ticket block reserves 10 IDs (only 4 used per the thresholds above).
-        // Final Chance's block is a special case: instead of j = threshold index, its
-        // 4 slots are used for the 4 dedicated FinalChanceCashOutLocationNames entries.
-        // -------------------------------------------------------
-        // -------------------------------------------------------
-        // PRESTIGE PERKS
-        // -------------------------------------------------------
-        public const int PrestigeLocationCount = 3;
+        
+        // Prestige Perks
+        public const int PrestigeLocationCount = 4;
 
         public static readonly string[] PrestigeSinglePerks = new[]
         {
@@ -283,23 +268,26 @@ namespace ScritchyScratchyAP
             "Hotkeys",
         };
 
+        // Self Made Millionaire, Less is More, Clean Freak, Refund, and
+        // Collector were trimmed from 10 to 5 max levels. Matches apworld's
+        // PRESTIGE_MULTI_PERKS/PRESTIGE_PROGRESSIVE_ITEM_COUNTS.
         public static readonly (string id, int max)[] PrestigeMultiPerks =
         {
             ("Jackpot Power",          5),
             ("Tool Belt",              5),
-            ("Self Made Millionaire", 10),
+            ("Self Made Millionaire",  5),
             ("Booster Kit",            5),
             ("Recycling",              5),
-            ("Less is More",          10),
+            ("Less is More",           5),
             ("Ignorance is Bliss",     5),
             ("Big Winner",             7),
             ("Completionist",          5),
-            ("Clean Freak",           10),
+            ("Clean Freak",            5),
             ("Smart Investment",       5),
             ("Learn by Doing",         5),
-            ("Refund",                10),
+            ("Refund",                 5),
             ("Soft Hands",             5),
-            ("Collector",             10),
+            ("Collector",              5),
             ("Experienced",            5),
             ("Built Different",        5),
         };

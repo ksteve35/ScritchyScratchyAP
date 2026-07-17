@@ -103,11 +103,13 @@ SINGLE_PURCHASE_UPGRADES = [
 ]
 
 # (upgrade_id, max_level), one check per level from 1 to max_level
+# Scratch Bot Strength trimmed from 20 to 10 (matches items.py
+# PROGRESSIVE_ITEM_COUNTS, item and location counts cut).
 MULTI_LEVEL_UPGRADES = [
     ("Scratch Luck",         45),
     ("Scratch Bot Speed",    30),
     ("Scratch Bot Capacity", 10),
-    ("Scratch Bot Strength", 20),
+    ("Scratch Bot Strength", 10),
     ("Fan Speed",             5),
     ("Fan Battery",           5),
     ("Mundo Speed",          10),
@@ -129,7 +131,7 @@ MULTI_LEVEL_UPGRADES = [
 ]
 
 # Prestige Perks
-PRESTIGE_LOCATION_COUNT = 3  # Number of prestige event check locations
+PRESTIGE_LOCATION_COUNT = 4  # Number of prestige event check locations
 
 # Single-purchase prestige perks
 PRESTIGE_SINGLE_PERKS = [
@@ -149,22 +151,26 @@ PRESTIGE_SINGLE_PERKS = [
 ]
 
 # Multi-level prestige perks: (perk_id, max_level)
+# Self Made Millionaire, Less is More, Clean Freak, Refund, and Collector were
+# trimmed from 10 to 5 max levels. They were the most expensive (cumulative JP
+# cost in the thousands) and among the most consistently implicated chains in
+# Fill.FillError generation failures.
 PRESTIGE_MULTI_PERKS = [
     ("Jackpot Power",          5),
     ("Tool Belt",              5),
-    ("Self Made Millionaire", 10),
+    ("Self Made Millionaire",  5),
     ("Booster Kit",            5),
     ("Recycling",              5),
-    ("Less is More",          10),
+    ("Less is More",           5),
     ("Ignorance is Bliss",     5),
     ("Big Winner",             7),
     ("Completionist",          5),
-    ("Clean Freak",           10),
+    ("Clean Freak",            5),
     ("Smart Investment",       5),
     ("Learn by Doing",         5),
-    ("Refund",                10),
+    ("Refund",                 5),
     ("Soft Hands",             5),
-    ("Collector",             10),
+    ("Collector",              5),
     ("Experienced",            5),
     ("Built Different",        5),
 ]
@@ -247,18 +253,18 @@ REGIONS = [
     "Menu",
     "Beginning",
     "Catalog 1",
+    "Prestige Tier 1",
     "Catalog 2",
+    "Prestige Tier 2",
     "Catalog 3",
+    "Prestige Tier 3",
     "Catalog 4",
-    "Early Prestige",
-    "Late Prestige",
+    "Lategame",
     "Endgame",
 ]
 
 
-# -------------------------------------------------------
 # Region Assignment Helper Functions
-# -------------------------------------------------------
 _TICKET_REGION: dict[str, str] = {
     "Day Job": "Beginning",
     **{t: "Catalog 1" for t in CATALOG_1_TICKETS},
@@ -272,24 +278,24 @@ _TICKET_REGION: dict[str, str] = {
 }
 
 _SINGLE_UPGRADE_REGION: dict[str, str] = {
-    "The Machine":      "Early Prestige",
+    "The Machine":      "Catalog 4",
     "Tin Coin":         "Catalog 1",
     "Aluminum Coin":    "Catalog 2",
     "Copper Coin":      "Catalog 3",
     "Bronze Coin":      "Catalog 3",
     "Iron Coin":        "Catalog 4",
     "Steel Coin":       "Catalog 4",
-    "Titanium Coin":    "Late Prestige",
-    "Tungsten Coin":    "Late Prestige",
+    "Titanium Coin":    "Catalog 4",
+    "Tungsten Coin":    "Catalog 4",
     "Trash Can":        "Catalog 1",
-    "Scratch Bot":      "Early Prestige",
-    "Fan":              "Early Prestige",
+    "Scratch Bot":      "Catalog 4",
+    "Fan":              "Catalog 4",
     "Sticky Mat":       "Catalog 2",
     "Badge Collection": "Catalog 2",
-    "Mundo":            "Early Prestige",
-    "Spell Book":       "Early Prestige",
+    "Mundo":            "Catalog 4",
+    "Spell Book":       "Catalog 4",
     "Subscription Bot": "Catalog 3",
-    "Egg Timer":        "Early Prestige",
+    "Egg Timer":        "Catalog 4",
 }
 
 _SCRATCH_SIZE_REGION: dict[str, str] = {
@@ -300,44 +306,69 @@ _SCRATCH_SIZE_REGION: dict[str, str] = {
     "Scratch Size Bronze Coin":   "Catalog 3",
     "Scratch Size Iron Coin":     "Catalog 4",
     "Scratch Size Steel Coin":    "Catalog 4",
-    "Scratch Size Titanium Coin": "Late Prestige",
-    "Scratch Size Tungsten Coin": "Late Prestige",
+    "Scratch Size Titanium Coin": "Catalog 4",
+    "Scratch Size Tungsten Coin": "Catalog 4",
 }
 
-_PRESTIGE_PERK_REGION: dict[str, str] = {
-    # Roots and depth-1 nodes, Early Prestige
-    "Starter Kit":            "Early Prestige",
-    "Jackpot Power":          "Early Prestige",
-    "Tool Belt":              "Early Prestige",
-    "Big Winner":             "Early Prestige",
-    "Recycling":              "Early Prestige",
-    "Less is More":           "Early Prestige",
-    "Completionist":          "Early Prestige",
-    "Electric Fan":           "Early Prestige",
-    "Booster Kit":            "Early Prestige",
-    "Self Made Millionaire":  "Early Prestige",
-    "Clean Freak":            "Early Prestige",
-    "Ignorance is Bliss":     "Early Prestige",
-    # Depth-2+, Late Prestige
-    "Shopping Spree":         "Late Prestige",
-    "Magic":                  "Late Prestige",
-    "Smart Investment":       "Late Prestige",
-    "Refund":                 "Late Prestige",
-    "Air Condition":          "Late Prestige",
-    "Pet Lover":              "Late Prestige",
-    "Soft Hands":             "Late Prestige",
-    "Dishwasher":             "Late Prestige",
-    "Learn by Doing":         "Late Prestige",
-    "Collector":              "Late Prestige",
-    "Experienced":            "Late Prestige",
-    "Fully Automated":        "Late Prestige",
-    "Picky Eater":            "Late Prestige",
-    "Fine Dining":            "Late Prestige",
-    "PlateMaster5000":        "Late Prestige",
-    "Built Different":        "Late Prestige",
-    # Deep branch tips, Endgame
-    "Hotkeys":                "Endgame",
-    "Loan Shark":             "Endgame",
+# Gadget sub-upgrades
+_GADGET_UPGRADE_LEVEL_REGIONS: dict[str, list[str]] = {
+    "Scratch Bot Speed":    ["Catalog 1"] * 5 + ["Catalog 2"] * 9 + ["Catalog 3"] * 11 + ["Catalog 4"] * 5,
+    "Scratch Bot Capacity": ["Catalog 1"] * 4 + ["Catalog 2"] * 6,
+    "Fan Speed":            ["Catalog 1"] * 3 + ["Catalog 2"] * 2,
+    "Fan Battery":          ["Catalog 1"] * 4 + ["Catalog 2"] * 1,
+    "Mundo Speed":          ["Catalog 2"] * 6 + ["Catalog 3"] * 4,
+    "Spell Charge Speed":   ["Catalog 3"] * 9 + ["Catalog 4"] * 1,
+    "Timer Capacity":       ["Catalog 4"] * 7 + ["Lategame"] * 3,
+    "Timer Charge":         ["Catalog 4"] * 7 + ["Lategame"] * 3,
+}
+
+# Prestige perk region assignment: prerequisite chain depth sets a floor
+# tier (a perk can never be reachable before its own prerequisites are),
+# and any individual level whose own JP price is >= PERK_PRICE_THRESHOLD
+# is pushed to Lategame regardless of depth, since it's realistically only
+# affordable after many prestige cycles' worth of accumulated Jackpot Points.
+# Depth-4+ perks (two or more prerequisite perks deep) go straight to Lategame
+# even when individually cheap, since their own prerequisites already can't
+# resolve earlier than that.
+PERK_PRICE_THRESHOLD = 251
+
+_PRESTIGE_SINGLE_PERK_REGION: dict[str, str] = {
+    "Starter Kit":      "Prestige Tier 1",
+    "Electric Fan":     "Prestige Tier 2",
+    "Air Condition":    "Prestige Tier 3",
+    "Pet Lover":        "Prestige Tier 3",
+    "Dishwasher":       "Prestige Tier 3",
+    "Magic":            "Prestige Tier 3",
+    "Shopping Spree":   "Prestige Tier 3",
+    "Loan Shark":       "Lategame",
+    "Picky Eater":      "Lategame",
+    "Fully Automated":  "Lategame",
+    "Fine Dining":      "Lategame",
+    "PlateMaster5000":  "Lategame",
+    "Hotkeys":          "Lategame",
+}
+
+# One region per level (index 0 = level 1). Cheap early levels of a perk can
+# land in an earlier tier than its own most expensive levels, same principle
+# already used for Scratch Luck.
+_PRESTIGE_MULTI_PERK_LEVEL_REGIONS: dict[str, list[str]] = {
+    "Jackpot Power":         ["Prestige Tier 1"] * 5,
+    "Tool Belt":             ["Prestige Tier 1"] * 5,
+    "Booster Kit":           ["Prestige Tier 2"] * 5,
+    "Recycling":             ["Prestige Tier 2"] * 5,
+    "Less is More":          ["Prestige Tier 2"] * 10,
+    "Ignorance is Bliss":    ["Prestige Tier 2"] * 5,
+    "Big Winner":            ["Prestige Tier 2"] * 7,
+    "Completionist":         ["Prestige Tier 2"] * 5,
+    "Self Made Millionaire": ["Prestige Tier 2"] * 7 + ["Lategame"] * 3,
+    "Clean Freak":           ["Prestige Tier 2"] * 8 + ["Lategame"] * 2,
+    "Smart Investment":      ["Prestige Tier 3"] * 5,
+    "Soft Hands":            ["Prestige Tier 3"] * 5,
+    "Learn by Doing":        ["Prestige Tier 3"] * 4 + ["Lategame"] * 1,
+    "Refund":                ["Prestige Tier 3"] * 8 + ["Lategame"] * 2,
+    "Collector":             ["Lategame"] * 10,
+    "Experienced":           ["Lategame"] * 5,
+    "Built Different":       ["Lategame"] * 5,
 }
 
 _ACHIEVEMENT_REGION: dict[str, str] = {
@@ -362,17 +393,17 @@ _ACHIEVEMENT_REGION: dict[str, str] = {
     "Big win":                           "Catalog 2",
     "High level gambling":               "Catalog 3",
     "Clicker minigame":                  "Catalog 2",
-    "Idle game":                         "Early Prestige",
+    "Idle game":                         "Catalog 4",
     "Visit the Night Market":            "Catalog 2",
     "Walk-in-closet":                    "Catalog 3",
     "Honest work":                       "Catalog 2",
     "Workaholic":                        "Catalog 3",
-    "Soul Siphon":                       "Early Prestige",
-    "Wizard":                            "Early Prestige",
-    "Time machine":                      "Late Prestige",
+    "Soul Siphon":                       "Catalog 4",
+    "Wizard":                            "Catalog 4",
+    "Time machine":                      "Lategame",
     "Scratch Final Chance Without Dying":"Catalog 4",
-    "Faithful Servant":                  "Early Prestige",
-    "Speedrun":                          "Late Prestige",
+    "Faithful Servant":                  "Catalog 4",
+    "Speedrun":                          "Lategame",
     "Max out skill tree":                "Endgame",
     "Achievement Hunter":                "Endgame",
 }
@@ -384,8 +415,11 @@ def _scratch_luck_region(level: int) -> str:
     if level <= 10: return "Catalog 2"
     if level <= 20: return "Catalog 3"
     if level <= 30: return "Catalog 4"
-    if level <= 40: return "Early Prestige"
-    return "Late Prestige"
+    # Levels beyond 30 are money-based, tied to real in-game cost past
+    # Catalog 4's own max requirement, not to the JP-based Prestige
+    # Tier system (which sits chronologically before Catalog 4 is even
+    # reached), so they all land in Lategame rather than being split further.
+    return "Lategame"
 
 
 def _multi_level_region(upgrade_id: str, level: int) -> str:
@@ -402,13 +436,13 @@ def _multi_level_region(upgrade_id: str, level: int) -> str:
         # "Level 1" check, hence the -1 adjustment (21 + level instead of 22 + level).
         return _scratch_luck_region(21 + level)
     if upgrade_id == "Warp Speed":
-        return "Early Prestige"
+        return "Catalog 4"
     if upgrade_id in _SCRATCH_SIZE_REGION:
         return _SCRATCH_SIZE_REGION[upgrade_id]
-    # Remaining gadget sub-upgrades (Scratch Bot Speed/Capacity, Fan Speed/Battery,
-    # Mundo Speed, Spell Charge Speed, Timer Capacity/Charge) have no confirmed cost
-    # data yet: levels 1-2 in Early Prestige, 3+ in Late Prestige.
-    return "Early Prestige" if level <= 2 else "Late Prestige"
+    if upgrade_id in _GADGET_UPGRADE_LEVEL_REGIONS:
+        regions = _GADGET_UPGRADE_LEVEL_REGIONS[upgrade_id]
+        return regions[level - 1] if level - 1 < len(regions) else "Lategame"
+    return "Lategame"
 
 
 # Location Table Builder
@@ -441,19 +475,19 @@ def build_location_table() -> dict[str, SSLocationData]:
             region = _TICKET_REGION.get(ticket, "Catalog 1")
             table[name] = SSLocationData(region=region, address=addr)
 
-    # Super ticket cash-out thresholds, all in Late Prestige (require Scratch Luck)
+    # Super ticket cash-out thresholds, all in Lategame (require Scratch Luck)
     super_base = BASE_ID + 200
     for i, ticket in enumerate(SUPER_TICKETS):
         for j, threshold in enumerate(SUPER_TICKET_THRESHOLDS):
             name = f"Cash Out {ticket} {threshold}"
             addr = super_base + (i * 10) + j
-            table[name] = SSLocationData(region="Late Prestige", address=addr)
+            table[name] = SSLocationData(region="Lategame", address=addr)
 
     # Single-purchase upgrades
     single_base = BASE_ID + 400
     for i, upgrade in enumerate(SINGLE_PURCHASE_UPGRADES):
         name = f"Buy {upgrade}"
-        region = _SINGLE_UPGRADE_REGION.get(upgrade, "Early Prestige")
+        region = _SINGLE_UPGRADE_REGION.get(upgrade, "Catalog 4")
         table[name] = SSLocationData(region=region, address=single_base + i)
 
     # Multi-level upgrades, one check per level
@@ -468,24 +502,27 @@ def build_location_table() -> dict[str, SSLocationData]:
 
     # Prestige event locations, locked Progressive Prestige items placed here
     prestige_base = BASE_ID + 1000
+    _prestige_event_region = ["Prestige Tier 1", "Prestige Tier 2", "Prestige Tier 3", "Lategame"]
     for i in range(PRESTIGE_LOCATION_COUNT):
         name = f"Prestige {i + 1}"
-        table[name] = SSLocationData(region="Early Prestige", address=prestige_base + i)
+        region = _prestige_event_region[i] if i < len(_prestige_event_region) else "Lategame"
+        table[name] = SSLocationData(region=region, address=prestige_base + i)
 
     # Single prestige perk purchase locations
     single_perk_base = BASE_ID + 1100
     for i, perk_id in enumerate(PRESTIGE_SINGLE_PERKS):
         name = f"Buy Prestige Perk {perk_id}"
-        region = _PRESTIGE_PERK_REGION.get(perk_id, "Late Prestige")
+        region = _PRESTIGE_SINGLE_PERK_REGION.get(perk_id, "Lategame")
         table[name] = SSLocationData(region=region, address=single_perk_base + i)
 
     # Multi-level prestige perk purchase locations, one check per level
     multi_perk_base = BASE_ID + 1200
     perk_offset = 0
     for perk_id, max_level in PRESTIGE_MULTI_PERKS:
+        level_regions = _PRESTIGE_MULTI_PERK_LEVEL_REGIONS.get(perk_id, [])
         for level in range(1, max_level + 1):
             name = f"Buy Prestige Perk {perk_id} Level {level}"
-            region = _PRESTIGE_PERK_REGION.get(perk_id, "Late Prestige")
+            region = level_regions[level - 1] if level - 1 < len(level_regions) else "Lategame"
             table[name] = SSLocationData(region=region, address=multi_perk_base + perk_offset + (level - 1))
         perk_offset += max_level
 
@@ -495,7 +532,7 @@ def build_location_table() -> dict[str, SSLocationData]:
     ach_base = BASE_ID + 900
     for i, achievement in enumerate(ACHIEVEMENTS):
         name = f"Achievement: {achievement}"
-        region = _ACHIEVEMENT_REGION.get(achievement, "Late Prestige")
+        region = _ACHIEVEMENT_REGION.get(achievement, "Lategame")
         table[name] = SSLocationData(
             region=region,
             address=ach_base + i,

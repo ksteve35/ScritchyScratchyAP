@@ -77,7 +77,6 @@ def set_rules(world: World) -> None:
     #                     Final Chance=5, Final Chance_2=9, Final Chance_4=18.
     # (ticket => (required coin, minimum Scratch Size level for that coin))
     # Day Job and Two Win need nothing (hardness 0, met by the starting Base Coin).
-    # -------------------------------------------------------
     TICKET_COIN_REQUIREMENTS = {
         "Mini Scratch":      ("Base Coin", 1),
         "Apple Tree":        ("Tin Coin", 0),
