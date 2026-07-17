@@ -48,7 +48,10 @@ PROGRESSIVE_ITEM_COUNTS = {
     # Require base gadget unlock. Full count in pool, every level is AP-gated.
     "Progressive Scratch Bot Capacity": 10,
     "Progressive Scratch Bot Speed":    30,
-    "Progressive Scratch Bot Strength": 20,
+    # Trimmed from 20 to 10 (10 items and 10 locations cut, same approach
+    # as the 5 prestige perks). Its levels beyond 10 were extrapolated
+    # and it was implicated in Fill.FillError generation failures.
+    "Progressive Scratch Bot Strength": 10,
     "Progressive Fan Speed":             5,
     "Progressive Fan Battery":           5,
     "Progressive Mundo Speed":          10,
@@ -70,19 +73,23 @@ PROGRESSIVE_ITEM_COUNTS = {
 PRESTIGE_PROGRESSIVE_ITEM_COUNTS = {
     "Progressive Jackpot Power":          5,
     "Progressive Tool Belt":              5,
-    "Progressive Self Made Millionaire": 10,
+    # These 5 perks were trimmed from 10 to 5 levels each (25 items and 25
+    # locations cut). They were both the most expensive (cumulative JP cost in the
+    # thousands) and, along with Scratch Luck/Scratch Bot Speed, among the most
+    # consistently implicated chains in Fill.FillError generation failures.
+    "Progressive Self Made Millionaire":  5,
     "Progressive Booster Kit":            5,
     "Progressive Recycling":              5,
-    "Progressive Less is More":          10,
+    "Progressive Less is More":           5,
     "Progressive Ignorance is Bliss":     5,
     "Progressive Big Winner":             7,
     "Progressive Completionist":          5,
-    "Progressive Clean Freak":           10,
+    "Progressive Clean Freak":            5,
     "Progressive Smart Investment":       5,
     "Progressive Learn by Doing":         5,
-    "Progressive Refund":                10,
+    "Progressive Refund":                 5,
     "Progressive Soft Hands":             5,
-    "Progressive Collector":             10,
+    "Progressive Collector":              5,
     "Progressive Experienced":            5,
     "Progressive Built Different":        5,
 }

@@ -86,19 +86,20 @@ class ScritchyScratchyWorld(World):
             state.count("Progressive Scratch Size Base Coin", self.player) >= 2
         )
 
-        # Buying/scratching each Final Chance variant is the actual vanilla mechanism
-        # that reveals the next catalog, so each transition also requires the matching
-        # "Unlock Final Chance N" AP item (variant 1 = base "Unlock Final Chance").
-        # Final Chance variant coin/Scratch Size requirements are derived from game data:
-        # each coin's base strength plus up to 2 Scratch Size levels (+1 each) must meet
-        # or exceed the ticket's hardness.
+        # Buying/scratching each Final Chance variant kills the player, which
+        # auto-triggers a prestige. That's the actual vanilla mechanism that
+        # reveals the next catalog, not merely holding the "Unlock Final Chance N"
+        # item. So each catalog's clear condition (Final Chance item plus the coin/
+        # Scratch Size level actually needed to physically scratch it) gates a
+        # dedicated "Prestige Tier N" region, and only once the resulting prestige
+        # has actually happened (Progressive Prestige count, the locked item
+        # awarded by checking "Prestige N") does the next catalog become reachable.
         #   Final Chance   hardness=5  -> Aluminum Coin (4) + 1 Scratch Size level
         #   Final Chance 2 hardness=9  -> Bronze Coin   (8) + 1 Scratch Size level
         #   Final Chance 3 hardness=13 -> Steel Coin    (12) + 1 Scratch Size level
         #   Final Chance 4 hardness=18 -> Tungsten Coin (16) + 2 Scratch Size levels (max)
-        e = regions["Catalog 1"].connect(regions["Catalog 2"])
+        e = regions["Catalog 1"].connect(regions["Prestige Tier 1"])
         e.access_rule = lambda state: (
-            state.has(f"Unlock {CATALOG_2_TICKETS[0]}", self.player) and
             state.has("Unlock Final Chance", self.player) and
             # Final Chance physically requires Scratch Luck level 8 to scratch
             # (confirmed in-game) — without it the AP item alone doesn't let the
@@ -109,25 +110,41 @@ class ScritchyScratchyWorld(World):
             all(state.has(f"Unlock {t}", self.player) for t in CATALOG_1_TICKETS)
         )
 
-        e = regions["Catalog 2"].connect(regions["Catalog 3"])
+        e = regions["Prestige Tier 1"].connect(regions["Catalog 2"])
         e.access_rule = lambda state: (
-            state.has(f"Unlock {CATALOG_3_TICKETS[0]}", self.player) and
+            state.has(f"Unlock {CATALOG_2_TICKETS[0]}", self.player) and
+            state.count("Progressive Prestige", self.player) >= 1
+        )
+
+        e = regions["Catalog 2"].connect(regions["Prestige Tier 2"])
+        e.access_rule = lambda state: (
             state.has("Unlock Final Chance 2", self.player) and
             state.has("Unlock Bronze Coin", self.player) and
             state.count("Progressive Scratch Size Bronze Coin", self.player) >= 1 and
             all(state.has(f"Unlock {t}", self.player) for t in CATALOG_2_TICKETS)
         )
 
-        e = regions["Catalog 3"].connect(regions["Catalog 4"])
+        e = regions["Prestige Tier 2"].connect(regions["Catalog 3"])
         e.access_rule = lambda state: (
-            state.has(f"Unlock {CATALOG_4_TICKETS[0]}", self.player) and
+            state.has(f"Unlock {CATALOG_3_TICKETS[0]}", self.player) and
+            state.count("Progressive Prestige", self.player) >= 2
+        )
+
+        e = regions["Catalog 3"].connect(regions["Prestige Tier 3"])
+        e.access_rule = lambda state: (
             state.has("Unlock Final Chance 3", self.player) and
             state.has("Unlock Steel Coin", self.player) and
             state.count("Progressive Scratch Size Steel Coin", self.player) >= 1 and
             all(state.has(f"Unlock {t}", self.player) for t in CATALOG_3_TICKETS)
         )
 
-        e = regions["Catalog 4"].connect(regions["Early Prestige"])
+        e = regions["Prestige Tier 3"].connect(regions["Catalog 4"])
+        e.access_rule = lambda state: (
+            state.has(f"Unlock {CATALOG_4_TICKETS[0]}", self.player) and
+            state.count("Progressive Prestige", self.player) >= 3
+        )
+
+        e = regions["Catalog 4"].connect(regions["Lategame"])
         e.access_rule = lambda state: (
             state.has("Unlock Booster Pack", self.player) and
             state.has("Unlock Final Chance 4", self.player) and
@@ -135,8 +152,10 @@ class ScritchyScratchyWorld(World):
             state.count("Progressive Scratch Size Tungsten Coin", self.player) >= 2
         )
 
-        regions["Early Prestige"].connect(regions["Late Prestige"])
-        regions["Late Prestige"].connect(regions["Endgame"])
+        # Final Chance 4 cannot realistically be survived, dying to it forces a
+        # 4th prestige, which is what's actually required to reach the true ending.
+        e = regions["Lategame"].connect(regions["Endgame"])
+        e.access_rule = lambda state: state.count("Progressive Prestige", self.player) >= 4
 
         # Place all locations into their regions
         for loc_name, loc_data in location_table.items():
