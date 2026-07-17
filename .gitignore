@@ -6,7 +6,7 @@ plugin/obj/
 apworld/__pycache__/
 *.pyc
 
-# Personal / runtime data — never commit these
+# Personal / runtime data - never commit these
 save.json
 *.cfg
 

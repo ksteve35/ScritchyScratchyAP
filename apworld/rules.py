@@ -128,7 +128,7 @@ def set_rules(world: World) -> None:
 
     # Final Chance Variant Cash-Out Rules
     # Each variant has its own dedicated one-time location, gated by its own AP item plus
-    # the coin/Scratch Size level actually needed to scratch it — mirrors the matching
+    # the coin/Scratch Size level actually needed to scratch it, mirrors the matching
     # region-entrance rules in __init__.py. Only variant 1 additionally needs Scratch
     # Luck level 8 (confirmed in-game). That requirement was never established for
     # variants 2-4.

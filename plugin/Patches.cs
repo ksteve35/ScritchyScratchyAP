@@ -59,7 +59,7 @@ namespace ScritchyScratchyAP
             {
                 if (!received.TryGetValue($"Unlock {id}", out int cnt) || cnt < 1)
                 {
-                    Plugin.Log.LogWarning($"AP: Blocked ticket purchase of '{id}' — not yet received from AP");
+                    Plugin.Log.LogWarning($"AP: Blocked ticket purchase of '{id}' - not yet received from AP");
                     __result = false;
                     return false;
                 }
@@ -74,7 +74,7 @@ namespace ScritchyScratchyAP
             {
                 if (!received.TryGetValue(requiredFcItem, out int fcCnt) || fcCnt < 1)
                 {
-                    Plugin.Log.LogWarning($"AP: Blocked ticket purchase of '{id}' — '{requiredFcItem}' not yet received from AP");
+                    Plugin.Log.LogWarning($"AP: Blocked ticket purchase of '{id}' - '{requiredFcItem}' not yet received from AP");
                     __result = false;
                     return false;
                 }
@@ -86,7 +86,7 @@ namespace ScritchyScratchyAP
             {
                 if (!received.TryGetValue($"Unlock {id}", out int unlockCnt) || unlockCnt < 1)
                 {
-                    Plugin.Log.LogWarning($"AP: Blocked upgrade '{id}' — 'Unlock {id}' not yet received");
+                    Plugin.Log.LogWarning($"AP: Blocked upgrade '{id}' - 'Unlock {id}' not yet received");
                     __result = false;
                     return false;
                 }
@@ -101,11 +101,11 @@ namespace ScritchyScratchyAP
                 if (!TrackingManager.IsLocationSent(checkName))
                 {
                     ShopBuyPending.PendingCheck = checkName;
-                    Plugin.Log.LogInfo($"AP ShopBuy: single-purchase '{id}' — letting TryBuy run, check='{checkName}'");
+                    Plugin.Log.LogInfo($"AP ShopBuy: single-purchase '{id}' - letting TryBuy run, check='{checkName}'");
                 }
                 else
                 {
-                    Plugin.Log.LogInfo($"AP ShopBuy: single-purchase '{id}' — check already sent, letting TryBuy run without resending (post-prestige re-buy)");
+                    Plugin.Log.LogInfo($"AP ShopBuy: single-purchase '{id}' - check already sent, letting TryBuy run without resending (post-prestige re-buy)");
                 }
                 return true;
             }
@@ -122,7 +122,7 @@ namespace ScritchyScratchyAP
                 {
                     if (!received.TryGetValue($"Unlock {reqGadget}", out int gc) || gc < 1)
                     {
-                        Plugin.Log.LogWarning($"AP: Blocked upgrade '{id}' — requires 'Unlock {reqGadget}'");
+                        Plugin.Log.LogWarning($"AP: Blocked upgrade '{id}' - requires 'Unlock {reqGadget}'");
                         __result = false;
                         return false;
                     }
@@ -148,7 +148,7 @@ namespace ScritchyScratchyAP
                 int receivedProgressiveCount = received.TryGetValue($"Progressive {apId}", out int pc) ? pc : 0;
                 if (cycleLevel <= gatedLevels && cycleLevel > receivedProgressiveCount)
                 {
-                    Plugin.Log.LogWarning($"AP: Blocked upgrade '{id}' level {cycleLevel} — only {receivedProgressiveCount} 'Progressive {apId}' received");
+                    Plugin.Log.LogWarning($"AP: Blocked upgrade '{id}' level {cycleLevel} - only {receivedProgressiveCount} 'Progressive {apId}' received");
                     __result = false;
                     return false;
                 }
@@ -160,12 +160,12 @@ namespace ScritchyScratchyAP
                 if (!TrackingManager.IsLocationSent(levelCheck))
                 {
                     ShopBuyPending.PendingCheck = levelCheck;
-                    Plugin.Log.LogInfo($"AP ShopBuy: manual progressive buy — id='{id}' apId='{apId}' cycleLevel={cycleLevel} check='{levelCheck}'");
+                    Plugin.Log.LogInfo($"AP ShopBuy: manual progressive buy - id='{id}' apId='{apId}' cycleLevel={cycleLevel} check='{levelCheck}'");
                 }
                 else
                 {
                     ShopBuyPending.PendingCheck = null;
-                    Plugin.Log.LogInfo($"AP ShopBuy: manual progressive buy — id='{id}' apId='{apId}' cycleLevel={cycleLevel} already sent, no resend (post-prestige re-buy)");
+                    Plugin.Log.LogInfo($"AP ShopBuy: manual progressive buy - id='{id}' apId='{apId}' cycleLevel={cycleLevel} already sent, no resend (post-prestige re-buy)");
                 }
                 return true;
             }
@@ -181,7 +181,7 @@ namespace ScritchyScratchyAP
             if (!__result)
             {
                 if (ShopBuyPending.PendingCheck != null)
-                    Plugin.Log.LogInfo($"AP ShopBuy: TryBuy declined for '{__instance.Data.id}' (insufficient funds) — clearing pending check.");
+                    Plugin.Log.LogInfo($"AP ShopBuy: TryBuy declined for '{__instance.Data.id}' (insufficient funds) - clearing pending check.");
                 ShopBuyPending.Clear();
             }
         }
@@ -253,7 +253,7 @@ namespace ScritchyScratchyAP
     {
         static void Postfix()
         {
-            Plugin.Log.LogInfo("AP: Shop populated — re-applying received items, locking unapplied.");
+            Plugin.Log.LogInfo("AP: Shop populated - re-applying received items, locking unapplied.");
             ItemApplicator.ApplyAll();
             ItemApplicator.LockUnapplied();
             ItemApplicator.ReapplyTemporaryEffects();
@@ -268,7 +268,7 @@ namespace ScritchyScratchyAP
     {
         static void Postfix()
         {
-            Plugin.Log.LogInfo("AP: TicketShop populated — re-applying received items, locking unapplied.");
+            Plugin.Log.LogInfo("AP: TicketShop populated - re-applying received items, locking unapplied.");
             ItemApplicator.ApplyAll();
             ItemApplicator.LockUnapplied();
         }
@@ -362,7 +362,7 @@ namespace ScritchyScratchyAP
             {
                 if (!received.TryGetValue($"Unlock {perkId}", out int cnt) || cnt < 1)
                 {
-                    Plugin.Log.LogWarning($"AP: Blocked prestige perk '{perkId}' — not yet received from AP");
+                    Plugin.Log.LogWarning($"AP: Blocked prestige perk '{perkId}' - not yet received from AP");
                     return false;
                 }
                 return true;
@@ -375,7 +375,7 @@ namespace ScritchyScratchyAP
                 int apLevel = received.TryGetValue($"Progressive {perkId}", out int ap) ? ap : 0;
                 if (__state + 1 > apLevel)
                 {
-                    Plugin.Log.LogWarning($"AP: Blocked prestige perk '{perkId}' level {__state + 1} — only {apLevel} AP levels received");
+                    Plugin.Log.LogWarning($"AP: Blocked prestige perk '{perkId}' level {__state + 1} - only {apLevel} AP levels received");
                     return false;
                 }
                 break;
@@ -399,7 +399,7 @@ namespace ScritchyScratchyAP
                 // game's own count actually moved.
                 if (boughtCount <= __state)
                 {
-                    Plugin.Log.LogInfo($"AP: Prestige perk '{perkId}' Buy() click did not result in a purchase (count unchanged at {boughtCount}) — no check sent.");
+                    Plugin.Log.LogInfo($"AP: Prestige perk '{perkId}' Buy() click did not result in a purchase (count unchanged at {boughtCount}) - no check sent.");
                     return;
                 }
 

@@ -58,7 +58,7 @@ class ScritchyScratchyWorld(World):
     # Early Items
     # Only Tin and Aluminum, the two coins actually needed to progress past
     # Catalog 1/2. Marking all 8 (or even 6) coins early was tried and broke
-    # generation entirely — it crammed too many items into the small sphere-0
+    # generation entirely, it crammed too many items into the small sphere-0
     # location pool (~7 locations) and starved out other early-critical items
     # like Unlock Two Win. Two items leaves plenty of room.
     def generate_early(self) -> None:
@@ -102,7 +102,7 @@ class ScritchyScratchyWorld(World):
         e.access_rule = lambda state: (
             state.has("Unlock Final Chance", self.player) and
             # Final Chance physically requires Scratch Luck level 8 to scratch
-            # (confirmed in-game) — without it the AP item alone doesn't let the
+            # (confirmed in-game), without it the AP item alone doesn't let the
             # player reach Catalog 2 in practice.
             state.count("Progressive Scratch Luck", self.player) >= 8 and
             state.has("Unlock Aluminum Coin", self.player) and

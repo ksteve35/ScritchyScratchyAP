@@ -75,7 +75,7 @@ namespace ScritchyScratchyAP
                     if (_connectingElapsed > ConnectTimeoutSeconds)
                     {
                         _isConnecting = false;
-                        _statusText.text = "Status: Disconnected (connect failed — check log)";
+                        _statusText.text = "Status: Disconnected (connect failed - check log)";
                     }
                 }
             }
@@ -400,7 +400,7 @@ namespace ScritchyScratchyAP
                 if (!int.TryParse(_portField.text, out int port))
                 {
                     _isConnecting = false;
-                    _statusText.text = "Invalid port — must be a number.";
+                    _statusText.text = "Invalid port - must be a number.";
                     return;
                 }
                 if (string.IsNullOrWhiteSpace(_slotField.text))
