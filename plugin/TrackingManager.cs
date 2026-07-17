@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace ScritchyScratchyAP
@@ -26,6 +28,12 @@ namespace ScritchyScratchyAP
         // notably F6's forced wipe and reconnect) would re-grant every cash injection/trap
         // ever received, since the replay refires ApplyItem for the entire item history.
         public Dictionary<string, int> AppliedNonIdempotentCounts { get; set; } = new();
+        // Which AP seed and slot this save's progress belongs to. Used by
+        // TrackingManager.ReconcileSaveForSeed to detect "this is a different
+        // playthrough" and switch to, or create, the right per-playthrough save
+        // file instead of silently mixing two playthroughs' progress together.
+        public string LastSeedName { get; set; } = "";
+        public string LastSlotName { get; set; } = "";
     }
 
     public static class TrackingManager
@@ -37,14 +45,78 @@ namespace ScritchyScratchyAP
         // does not fire outgoing checks or update UpgradePurchaseCounts.
         public static bool IsApplyingReceivedItem = false;
 
-        private static string SavePath => Path.Combine(
-            BepInEx.Paths.BepInExRootPath, "data", "ScritchyScratchyAP", "save.json");
+        private static string DataDir => Path.Combine(
+            BepInEx.Paths.BepInExRootPath, "data", "ScritchyScratchyAP");
+
+        // Active save file for whichever playthrough is currently connected. Not
+        // meaningful until ReconcileSaveForSeed runs (right after connecting, once
+        // the AP seed name is known), which is always before anything calls Save().
+        private static string _activeSavePath = Path.Combine(DataDir, "saves", "_unassigned.json");
 
         // Call this after AP connection is established
         public static void Initialize()
         {
-            Load();
-            Plugin.Log.LogInfo($"AP Tracking: Initialized. {_data.SentLocations.Count} checks already sent.");
+            Plugin.Log.LogInfo("AP Tracking: Initialized.");
+        }
+
+        // Called once per successful connection, right after the AP seed name becomes
+        // known before the item-received subscription/login replay even starts, so
+        // there's no window where a replay could land in the wrong file. Detects
+        // whether the currently loaded save belongs to a different playthrough than
+        // the one we just connected to, and if so, stashes it under its own
+        // per-(seed, slot) file and loads, or creates, the correct one instead.
+        // This is what prevents one playthrough's progress from bleeding into
+        // another's, and lets a player freely switch between multiple ongoing
+        // playthroughs without losing progress on any of them.
+        public static void ReconcileSaveForSeed(string seedName, string slotName)
+        {
+            if (string.IsNullOrEmpty(seedName))
+            {
+                Plugin.Log.LogWarning("AP: ReconcileSaveForSeed called with empty seed name, skipping.");
+                return;
+            }
+
+            bool sameIdentity = _data.LastSeedName == seedName && _data.LastSlotName == slotName;
+            if (sameIdentity)
+            {
+                _activeSavePath = SaveFilePathFor(seedName, slotName);
+                Plugin.Log.LogInfo("AP: Reconnecting to the same playthrough, keeping existing save.");
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(_data.LastSeedName))
+            {
+                // Switching to a different playthrough than the one currently loaded.
+                // Preserve the old one under its own file before touching _data.
+                string previousPath = SaveFilePathFor(_data.LastSeedName, _data.LastSlotName);
+                WriteToPath(previousPath, _data);
+                Plugin.Log.LogInfo($"AP: Switched playthroughs — saved previous progress to '{previousPath}'.");
+            }
+
+            string newPath = SaveFilePathFor(seedName, slotName);
+            if (File.Exists(newPath))
+            {
+                _data = ReadFromPath(newPath) ?? new TrackingData();
+                Plugin.Log.LogInfo($"AP: Loaded existing save for this playthrough from '{newPath}'.");
+            }
+            else
+            {
+                _data = new TrackingData();
+                Plugin.Log.LogInfo("AP: No existing save for this playthrough — starting fresh.");
+            }
+
+            _data.LastSeedName = seedName;
+            _data.LastSlotName = slotName;
+            _activeSavePath = newPath;
+            Save();
+        }
+
+        private static string SaveFilePathFor(string seedName, string slotName)
+        {
+            using var sha = SHA256.Create();
+            byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes($"{seedName}|{slotName}"));
+            string hex = BitConverter.ToString(hash).Replace("-", "").Substring(0, 24).ToLowerInvariant();
+            return Path.Combine(DataDir, "saves", $"{hex}.json");
         }
 
         // Received Item Tracking
@@ -53,10 +125,10 @@ namespace ScritchyScratchyAP
         // list from the server always rebuilds cleanly.
         public static void ResetReceivedItems()
         {
-            // Clear in-memory only. Do not save here. Initialize() loads the real
-            // save (with SentLocations) before this is called, so saving now would
-            // overwrite that data with an empty ReceivedItemCounts. The server replay
-            // will rebuild counts via IncrementReceivedItem which saves incrementally.
+            // Clear in-memory only. Do not save here. ReconcileSaveForSeed loads the
+            // real save (with SentLocations) before this is called, so saving now
+            // would overwrite that data with an empty ReceivedItemCounts. The server
+            // replay will rebuild counts via IncrementReceivedItem which saves incrementally.
             _data.ReceivedItemCounts.Clear();
         }
 
@@ -320,42 +392,38 @@ namespace ScritchyScratchyAP
             Plugin.Log.LogInfo($"AP: Check sent: '{locationName}' (ID: {locationId})");
         }
 
-        // Save/Load
-        public static void Save()
+        // Save
+        public static void Save() => WriteToPath(_activeSavePath, _data);
+
+        private static void WriteToPath(string path, TrackingData data)
         {
             lock (_saveLock)
             {
                 try
                 {
-                    string dir = Path.GetDirectoryName(SavePath);
+                    string dir = Path.GetDirectoryName(path);
                     if (dir != null) Directory.CreateDirectory(dir);
-                    File.WriteAllText(SavePath, JsonConvert.SerializeObject(_data, Formatting.Indented));
+                    File.WriteAllText(path, JsonConvert.SerializeObject(data, Formatting.Indented));
                 }
                 catch (Exception e)
                 {
-                    Plugin.Log.LogError($"AP: Failed to save tracking data: {e.Message}");
+                    Plugin.Log.LogError($"AP: Failed to save tracking data to '{path}': {e.Message}");
                 }
             }
         }
 
-        public static void Load()
+        private static TrackingData ReadFromPath(string path)
         {
             try
             {
-                if (File.Exists(SavePath))
-                {
-                    string json = File.ReadAllText(SavePath);
-                    _data = JsonConvert.DeserializeObject<TrackingData>(json) ?? new TrackingData();
-                }
-                else
-                {
-                    _data = new TrackingData();
-                }
+                if (!File.Exists(path)) return null;
+                string json = File.ReadAllText(path);
+                return JsonConvert.DeserializeObject<TrackingData>(json);
             }
             catch (Exception e)
             {
-                Plugin.Log.LogError($"AP: Failed to load tracking data: {e.Message}");
-                _data = new TrackingData();
+                Plugin.Log.LogError($"AP: Failed to load tracking data from '{path}': {e.Message}");
+                return null;
             }
         }
 
@@ -373,8 +441,8 @@ namespace ScritchyScratchyAP
                 _data = new TrackingData { AppliedNonIdempotentCounts = preservedApplied };
                 try
                 {
-                    if (File.Exists(SavePath))
-                        File.Delete(SavePath);
+                    if (File.Exists(_activeSavePath))
+                        File.Delete(_activeSavePath);
                 }
                 catch (Exception e)
                 {

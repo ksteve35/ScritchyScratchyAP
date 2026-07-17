@@ -1,6 +1,7 @@
 ﻿using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Helpers;
+using Archipelago.MultiClient.Net.Packets;
 using System;
 using System.Collections.Generic;
 
@@ -52,22 +53,48 @@ namespace ScritchyScratchyAP
                 Plugin.Log.LogError($"AP: Socket closed! Reason: {reason}");
             };
 
+            // Connect (not login) first so the AP seed name is known before any item
+            // replay can happen. ReconcileSaveForSeed then gets a chance to switch to
+            // or create the correct per-playthrough save file, critical since the
+            // save file tracks per-player progress like SentLocations and progressive
+            // upgrade levels, which must never bleed between two different AP seeds/
+            // slots sharing this same game install. Only once that's settled do we
+            // subscribe to ItemReceived and log in, so the login's full item replay
+            // always lands in the right file, never a stale or wrong one.
+            RoomInfoPacket roomInfo;
+            try
+            {
+                var connectTask = Session.ConnectAsync();
+                if (!connectTask.Wait(TimeSpan.FromSeconds(4.0)))
+                {
+                    return "Connection timed out.";
+                }
+                roomInfo = connectTask.Result;
+            }
+            catch (Exception e)
+            {
+                Plugin.Log.LogError($"AP: Failed to connect: {e.Message}");
+                return $"Failed to connect: {e.GetBaseException().Message}";
+            }
+
+            TrackingManager.ReconcileSaveForSeed(roomInfo.SeedName, slotName);
+
             // Subscribe BEFORE logging in. With ItemsHandlingFlags.AllItems, the server
             // replays the entire item history as part of the login, and the
             // client library can raise ItemReceived for that burst before
-            // TryConnectAndLogin() even returns. Subscribing after login is a race.
+            // LoginAsync() even returns. Subscribing after login is a race.
             TrackingManager.ResetReceivedItems();
             ItemApplicator.ResetAppliedLevels();
             Session.Items.ItemReceived += OnItemReceived;
 
             try
             {
-                loginResult = Session.TryConnectAndLogin(
+                loginResult = Session.LoginAsync(
                     "Scritchy Scratchy",
                     slotName,
                     ItemsHandlingFlags.AllItems,
                     password: password == "" ? null : password
-                );
+                ).GetAwaiter().GetResult();
             }
             catch (Exception e)
             {
