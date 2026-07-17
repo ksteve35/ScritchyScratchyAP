@@ -149,7 +149,7 @@ namespace ScritchyScratchyAP
             { "Warp Speed",           "The Machine" },
         };
 
-        // Multi-level upgrades — one check per level from 1 to max
+        // Multi-level upgrades - one check per level from 1 to max
         // Format: (upgradeId, maxLevel)
         // Scratch Size uses Buy(-1)/Buy(1) via ApplyShopUpgradeToLevel (max=2 per coin tier)
         // Scratch Bot Strength trimmed from 20 to 10 (matches apworld's

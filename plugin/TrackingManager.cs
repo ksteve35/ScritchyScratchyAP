@@ -90,7 +90,7 @@ namespace ScritchyScratchyAP
                 // Preserve the old one under its own file before touching _data.
                 string previousPath = SaveFilePathFor(_data.LastSeedName, _data.LastSlotName);
                 WriteToPath(previousPath, _data);
-                Plugin.Log.LogInfo($"AP: Switched playthroughs — saved previous progress to '{previousPath}'.");
+                Plugin.Log.LogInfo($"AP: Switched playthroughs - saved previous progress to '{previousPath}'.");
             }
 
             string newPath = SaveFilePathFor(seedName, slotName);
@@ -102,7 +102,7 @@ namespace ScritchyScratchyAP
             else
             {
                 _data = new TrackingData();
-                Plugin.Log.LogInfo("AP: No existing save for this playthrough — starting fresh.");
+                Plugin.Log.LogInfo("AP: No existing save for this playthrough - starting fresh.");
             }
 
             _data.LastSeedName = seedName;
@@ -317,10 +317,10 @@ namespace ScritchyScratchyAP
                 int count = saveData.prestigeCount;
                 if (count <= 0 || count > Locations.PrestigeLocationCount) return;
                 string locationName = $"Prestige {count}";
-                Plugin.Log.LogInfo($"AP Tracking: Prestige #{count} — checking '{locationName}'");
+                Plugin.Log.LogInfo($"AP Tracking: Prestige #{count} - checking '{locationName}'");
                 TrySendCheck(locationName);
                 _data.ProgressiveCycleLevels.Clear();
-                Plugin.Log.LogInfo("AP Tracking: Prestige — cleared progressive upgrade cycle levels.");
+                Plugin.Log.LogInfo("AP Tracking: Prestige - cleared progressive upgrade cycle levels.");
                 Save();
             }
             catch (Exception e)
@@ -360,7 +360,7 @@ namespace ScritchyScratchyAP
         // Goal
         private static void TriggerGoal()
         {
-            Plugin.Log.LogInfo("AP: *** GOAL REACHED — Final Chance won! ***");
+            Plugin.Log.LogInfo("AP: *** GOAL REACHED - Final Chance won! ***");
             if (!ArchipelagoManager.Connected) return;
             try
             {

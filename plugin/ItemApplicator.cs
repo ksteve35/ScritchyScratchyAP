@@ -477,7 +477,7 @@ namespace ScritchyScratchyAP
 
             _appliedLevels[upgradeId] = targetLevel;
 
-            Plugin.Log.LogInfo($"AP ItemApplicator: '{upgradeId}' {currentApplied} → {targetLevel} (ApplyUpgrade — no cost inflation)");
+            Plugin.Log.LogInfo($"AP ItemApplicator: '{upgradeId}' {currentApplied} -> {targetLevel} (ApplyUpgrade, no cost inflation)");
             TrackingManager.IsApplyingReceivedItem = true;
             try
             {
@@ -515,7 +515,7 @@ namespace ScritchyScratchyAP
             if (!ticketShop.shopPanelDict.TryGetValue(ticketName, out ShopPanel panel))
             {
                 if (_loggedDeferrals.Add($"catalog:{ticketName}"))
-                    Plugin.Log.LogInfo($"AP ItemApplicator: Deferring '{ticketName}' — catalog not yet naturally reached (ActiveCatalogs={ticketShop.ActiveCatalogs})");
+                    Plugin.Log.LogInfo($"AP ItemApplicator: Deferring '{ticketName}' - catalog not yet naturally reached (ActiveCatalogs={ticketShop.ActiveCatalogs})");
                 return;
             }
 
@@ -630,7 +630,7 @@ namespace ScritchyScratchyAP
                 return;
             }
             double reduced = wallet.Money * 0.75;
-            Plugin.Log.LogInfo($"AP ItemApplicator: Debt Trap — reducing balance from {wallet.Money:F0} to {reduced:F0}");
+            Plugin.Log.LogInfo($"AP ItemApplicator: Debt Trap - reducing balance from {wallet.Money:F0} to {reduced:F0}");
             wallet.SetMoney(reduced);
         }
 
@@ -642,12 +642,12 @@ namespace ScritchyScratchyAP
                 if (player == null)
                     throw new Exception("Player not found");
 
-                Plugin.Log.LogInfo("AP ItemApplicator: Loan Trap — spawning loan with dialogue");
+                Plugin.Log.LogInfo("AP ItemApplicator: Loan Trap - spawning loan with dialogue");
                 player.SpawnLoanWithDialogue();
             }
             catch (Exception ex)
             {
-                Plugin.Log.LogWarning($"AP ItemApplicator: Loan Trap failed ({ex.Message}) — falling back to Debt Trap effect");
+                Plugin.Log.LogWarning($"AP ItemApplicator: Loan Trap failed ({ex.Message}) - falling back to Debt Trap effect");
                 ApplyDebtTrap();
             }
         }
@@ -661,7 +661,7 @@ namespace ScritchyScratchyAP
             var scratching = UnityEngine.Object.FindObjectOfType<PlayerScratching>(true);
             if (scratching != null)
                 scratching.ScratchLuck += STREAK_LUCK_AMOUNT;
-            Plugin.Log.LogInfo($"AP ItemApplicator: Lucky Streak — ScratchLuck +{STREAK_LUCK_AMOUNT} for {_luckyStreakTickets} ticket(s)");
+            Plugin.Log.LogInfo($"AP ItemApplicator: Lucky Streak - ScratchLuck +{STREAK_LUCK_AMOUNT} for {_luckyStreakTickets} ticket(s)");
         }
 
         private static void ApplyUnluckyStreak()
@@ -670,7 +670,7 @@ namespace ScritchyScratchyAP
             var scratching = UnityEngine.Object.FindObjectOfType<PlayerScratching>(true);
             if (scratching != null)
                 scratching.LuckReduction += STREAK_LUCK_AMOUNT;
-            Plugin.Log.LogInfo($"AP ItemApplicator: Unlucky Streak — LuckReduction +{STREAK_LUCK_AMOUNT} for {_unluckyStreakTickets} ticket(s)");
+            Plugin.Log.LogInfo($"AP ItemApplicator: Unlucky Streak - LuckReduction +{STREAK_LUCK_AMOUNT} for {_unluckyStreakTickets} ticket(s)");
         }
 
         // Called from Patch_PopulateShop after ApplyAll resets the base luck values.
@@ -683,12 +683,12 @@ namespace ScritchyScratchyAP
             if (_luckyStreakTickets > 0)
             {
                 scratching.ScratchLuck += STREAK_LUCK_AMOUNT;
-                Plugin.Log.LogInfo($"AP ItemApplicator: Lucky Streak re-applied — {_luckyStreakTickets} ticket(s) remaining");
+                Plugin.Log.LogInfo($"AP ItemApplicator: Lucky Streak re-applied - {_luckyStreakTickets} ticket(s) remaining");
             }
             if (_unluckyStreakTickets > 0)
             {
                 scratching.LuckReduction += STREAK_LUCK_AMOUNT;
-                Plugin.Log.LogInfo($"AP ItemApplicator: Unlucky Streak re-applied — {_unluckyStreakTickets} ticket(s) remaining");
+                Plugin.Log.LogInfo($"AP ItemApplicator: Unlucky Streak re-applied - {_unluckyStreakTickets} ticket(s) remaining");
             }
         }
 

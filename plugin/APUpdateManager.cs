@@ -84,7 +84,7 @@ namespace ScritchyScratchyAP
                 // Without the reconnect, the server won't re-send items.
                 if (kb.f6Key.wasPressedThisFrame)
                 {
-                    Plugin.Log.LogInfo("AP: F6 — wiping save and resetting state.");
+                    Plugin.Log.LogInfo("AP: F6 - wiping save and resetting state.");
                     TrackingManager.WipeSave();
                     _trackingInitialized = true; // WipeSave already gives us a fresh in-memory state
                     ItemApplicator.ResetAppliedLevels();
@@ -146,7 +146,7 @@ namespace ScritchyScratchyAP
                 var ticket = scratching?.CurrentTicket;
                 if (ticket == null)
                 {
-                    Plugin.Log.LogWarning($"AP: {source} — no active ticket.");
+                    Plugin.Log.LogWarning($"AP: {source} - no active ticket.");
                 }
                 else
                 {
@@ -158,7 +158,7 @@ namespace ScritchyScratchyAP
                         ticket.cashOutButton.onClick.Invoke();
                     else
                         ticket.OnCashedOut?.Invoke();
-                    Plugin.Log.LogInfo($"AP: {source} — instant cash-out triggered.");
+                    Plugin.Log.LogInfo($"AP: {source} - instant cash-out triggered.");
                 }
             }
             catch (Exception ex)
@@ -194,7 +194,7 @@ namespace ScritchyScratchyAP
             string result = ArchipelagoManager.TryConnect(host, port, slotName, password);
             if (result == "")
             {
-                Plugin.Log.LogInfo("AP: Reconnect successful — waiting for server replay...");
+                Plugin.Log.LogInfo("AP: Reconnect successful - waiting for server replay...");
                 yield return new WaitForSeconds(1.5f);
                 ItemApplicator.ApplyAll();
                 ItemApplicator.LockUnapplied();
