@@ -93,12 +93,17 @@ namespace ScritchyScratchyAP
                         Plugin.ConfigSlotName.Value, Plugin.ConfigPassword.Value).WrapToIl2Cpp());
                 }
 
-                // F7: instantly grant the same amount a real "Small Cash Injection" item would (testing shortcut).
+                // F7: instantly grant the same amount a real "Small Cash Injection" item
+                // would (testing shortcut). Shift+F7 grants a "Large Cash Injection" instead.
                 if (kb.f7Key.wasPressedThisFrame)
                 {
+                    bool shift = kb.leftShiftKey.isPressed || kb.rightShiftKey.isPressed;
                     try
                     {
-                        ItemApplicator.DebugGrantSmallCashInjection();
+                        if (shift)
+                            ItemApplicator.DebugGrantLargeCashInjection();
+                        else
+                            ItemApplicator.DebugGrantSmallCashInjection();
                     }
                     catch (Exception ex)
                     {

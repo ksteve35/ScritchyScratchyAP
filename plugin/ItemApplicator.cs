@@ -44,41 +44,6 @@ namespace ScritchyScratchyAP
             { "Final Chance_4", "Unlock Final Chance 4" },
         };
 
-        // Maps prestige perk ID strings to their PerkType enum values
-        public static readonly Dictionary<string, PerkType> PerkTypeByName = new()
-        {
-            { "Starter Kit",           PerkType.StarterKit },
-            { "Jackpot Power",         PerkType.JackpotPower },
-            { "Tool Belt",             PerkType.ToolBelt },
-            { "Self Made Millionaire", PerkType.SelfMadeMillionaire },
-            { "Booster Kit",           PerkType.BoosterKit },
-            { "Recycling",             PerkType.Recycling },
-            { "Less is More",          PerkType.LessIsMore },
-            { "Ignorance is Bliss",    PerkType.IgnoranceIsBliss },
-            { "Big Winner",            PerkType.BigWinner },
-            { "Completionist",         PerkType.Completionist },
-            { "Electric Fan",          PerkType.ElectricFan },
-            { "Clean Freak",           PerkType.CleanFreak },
-            { "Smart Investment",      PerkType.SmartInvestment },
-            { "Learn by Doing",        PerkType.LearnByDoing },
-            { "Air Condition",         PerkType.AirCondition },
-            { "Pet Lover",             PerkType.PetLover },
-            { "Dishwasher",            PerkType.Dishwasher },
-            { "Magic",                 PerkType.Magic },
-            { "Shopping Spree",        PerkType.ShoppingSpree },
-            { "Refund",                PerkType.Refund },
-            { "Soft Hands",            PerkType.SoftHands },
-            { "Collector",             PerkType.Collector },
-            { "Loan Shark",            PerkType.LoanShark },
-            { "Experienced",           PerkType.Experienced },
-            { "Picky Eater",           PerkType.PickyEater },
-            { "Fully Automated",       PerkType.FullyAutomated },
-            { "Fine Dining",           PerkType.FineDining },
-            { "Built Different",       PerkType.BuiltDifferent },
-            { "Hotkeys",               PerkType.Hotkeys },
-            { "PlateMaster5000",       PerkType.PlateMaster5000 },
-        };
-
         // Temporary ScratchLuck modifiers. Each streak item adds 3 to the counter;
         // the bonus is re-applied after every PopulateShop reset and removed when the
         // counter reaches 0 (decremented on each ticket cash-out).
@@ -266,16 +231,19 @@ namespace ScritchyScratchyAP
             else if (itemName.StartsWith("Progressive "))
             {
                 string upgradeId = itemName.Substring("Progressive ".Length);
-                // Route prestige multi-level perks to the perk manager
                 bool isPrestigePerk = false;
                 foreach (var (id, _) in Locations.PrestigeMultiPerks)
                 {
                     if (id == upgradeId) { isPrestigePerk = true; break; }
                 }
-                if (isPrestigePerk)
-                    ApplyPrestigePerkProgressive(upgradeId, totalReceived);
-                else if (upgradeId == "Prestige")
-                    { /* no-op: Progressive Prestige is a locked item earned by prestiging */ }
+                if (isPrestigePerk || upgradeId == "Prestige")
+                    // Prestige perks are gate-only, exactly like shop upgrades: receiving
+                    // this item only unlocks manual purchase via the Prestige Perk panel.
+                    // Patch_PrestigePerkBuy already gates the real Buy() and sends the
+                    // check. Applying it here would grant the perk for free without
+                    // spending Jackpot Points. Progressive Prestige itself is a locked
+                    // item earned by prestiging, never drawn from the pool.
+                    { /* no-op */ }
                 else
                     // Every progressive shop upgrade (Scratch Luck, Scratch Size, Scratch Bot
                     // Speed/Capacity/Strength, Timer Capacity/Charge, Fan Speed/Battery, Mundo
@@ -323,10 +291,13 @@ namespace ScritchyScratchyAP
         // Unlock routing
         private static void ApplyUnlock(string target)
         {
-            // Prestige single-purchase perks
+            // Prestige single-purchase perks are gate-only, exactly like shop upgrades:
+            // receiving this item only unlocks manual purchase via the Prestige Perk
+            // panel. Patch_PrestigePerkBuy already gates the real Buy() and sends the
+            // check. Applying it here would grant the perk for free without spending
+            // Jackpot Points.
             if (Array.IndexOf(Locations.PrestigeSinglePerks, target) >= 0)
             {
-                ApplyPrestigePerk(target);
                 return;
             }
 
@@ -367,76 +338,6 @@ namespace ScritchyScratchyAP
             catch (Exception ex)
             {
                 Plugin.Log.LogError($"AP ItemApplicator: SetLocked(false) threw for '{upgradeId}': {ex.Message}");
-            }
-        }
-
-        // Prestige perks
-        private static void ApplyPrestigePerk(string perkId)
-        {
-            if (!PerkTypeByName.TryGetValue(perkId, out PerkType perkType))
-            {
-                Plugin.Log.LogWarning($"AP ItemApplicator: Unknown prestige perk '{perkId}'");
-                return;
-            }
-            if (_appliedLevels.TryGetValue($"Perk:{perkId}", out int applied) && applied >= 1) return;
-            _appliedLevels[$"Perk:{perkId}"] = 1;
-
-            TrackingManager.IsApplyingReceivedItem = true;
-            try
-            {
-                var perkManager = UnityEngine.Object.FindObjectOfType<PerkManager>(true);
-                if (perkManager == null)
-                {
-                    Plugin.Log.LogWarning($"AP ItemApplicator: PerkManager not found, deferring '{perkId}'");
-                    return;
-                }
-                Plugin.Log.LogInfo($"AP ItemApplicator: Activating prestige perk '{perkId}' at level 1");
-                perkManager.ActivatePerk(perkType, 1);
-            }
-            catch (Exception ex)
-            {
-                Plugin.Log.LogError($"AP ItemApplicator: ActivatePerk threw for '{perkId}': {ex.Message}");
-            }
-            finally
-            {
-                TrackingManager.IsApplyingReceivedItem = false;
-            }
-        }
-
-        private static void ApplyPrestigePerkProgressive(string perkId, int targetLevel)
-        {
-            if (!PerkTypeByName.TryGetValue(perkId, out PerkType perkType))
-            {
-                Plugin.Log.LogWarning($"AP ItemApplicator: Unknown prestige perk '{perkId}'");
-                return;
-            }
-            if (_appliedLevels.TryGetValue($"Perk:{perkId}", out int currentApplied) && currentApplied >= targetLevel) return;
-            _appliedLevels[$"Perk:{perkId}"] = targetLevel;
-
-            TrackingManager.IsApplyingReceivedItem = true;
-            try
-            {
-                var perkManager = UnityEngine.Object.FindObjectOfType<PerkManager>(true);
-                if (perkManager == null)
-                {
-                    Plugin.Log.LogWarning($"AP ItemApplicator: PerkManager not found, deferring '{perkId}'");
-                    return;
-                }
-                // Take max of AP level and player's manually bought level to prevent downgrade
-                int manualLevel = 0;
-                try { manualLevel = SaveData.Current?.GetPrestigeUpgradeBuyCount(perkId) ?? 0; }
-                catch { }
-                int applyLevel = Math.Max(targetLevel, manualLevel);
-                Plugin.Log.LogInfo($"AP ItemApplicator: Prestige perk '{perkId}' → level {applyLevel} (AP:{targetLevel}, manual:{manualLevel})");
-                perkManager.ActivatePerk(perkType, applyLevel);
-            }
-            catch (Exception ex)
-            {
-                Plugin.Log.LogError($"AP ItemApplicator: ActivatePerk threw for '{perkId}': {ex.Message}");
-            }
-            finally
-            {
-                TrackingManager.IsApplyingReceivedItem = false;
             }
         }
 
@@ -580,6 +481,13 @@ namespace ScritchyScratchyAP
         public static void DebugGrantSmallCashInjection()
         {
             ApplyScaledCash(10.0);
+        }
+
+        // Testing shortcut for the Shift+F7 hotkey. Grants the same
+        // amount a "Large Cash Injection" item would right now.
+        public static void DebugGrantLargeCashInjection()
+        {
+            ApplyScaledCash(100.0);
         }
 
         private static void ApplyCash(double amount)
