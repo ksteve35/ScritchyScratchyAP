@@ -304,10 +304,13 @@ namespace ScritchyScratchyAP
                 // back on prestige, same as it resets their displayed shop level to 1.
                 // _appliedLevels doesn't know that happened, so without clearing it ApplyAll()
                 // would see "already applied to level N" and silently skip re-calling
-                // ApplyUpgrade(), permanently losing the AP-granted boost.
+                // ApplyUpgrade(), permanently losing the AP-granted boost. Only clear the
+                // guard here, don't force ApplyAll()/LockUnapplied() yet, the game hasn't
+                // finished rebuilding its own shop save data this soon after Prestige()
+                // returns (calling shop methods here crashes on missing save data).
+                // Patch_PopulateShop.Postfix re-applies once the shop is actually rebuilt,
+                // with the periodic 3-second retry as a backup.
                 ItemApplicator.ResetAppliedLevels();
-                ItemApplicator.ApplyAll();
-                ItemApplicator.LockUnapplied();
             });
         }
     }
