@@ -483,6 +483,13 @@ namespace ScritchyScratchyAP
             ApplyScaledCash(10.0);
         }
 
+        // Testing shortcut for the Shift+F7 hotkey. Grants the same
+        // amount a "Large Cash Injection" item would right now.
+        public static void DebugGrantLargeCashInjection()
+        {
+            ApplyScaledCash(100.0);
+        }
+
         private static void ApplyCash(double amount)
         {
             var wallet = UnityEngine.Object.FindObjectOfType<PlayerWallet>();
