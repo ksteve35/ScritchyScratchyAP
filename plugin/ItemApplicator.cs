@@ -9,7 +9,11 @@ namespace ScritchyScratchyAP
     {
         // Tracks what levels have actually applied this session.
         // Keyed by upgrade/ticket name, value is the level applied (1 for single/ticket).
-        // Reset every connection so re-received items re-apply after prestige.
+        // Reset on connect/reconnect (ResetAppliedLevels) and on every prestige
+        // (Patch_Prestige.Postfix), since prestige resets the game's own progressive
+        // stats, just like it resets their displayed shop level to 1. Without the prestige
+        // reset, ApplyAll() would see "already applied to level N" and skip re-calling
+        // ApplyUpgrade(), permanently losing the AP-granted boost.
         private static readonly Dictionary<string, int> _appliedLevels = new();
 
         // Suppresses repeated "deferring X, predecessor Y not yet received" log lines.
@@ -27,11 +31,6 @@ namespace ScritchyScratchyAP
         // calls the game may trigger as side effects of buying another upgrade.
         private static string _currentlyApplyingId = null;
         public static string CurrentlyApplyingId => _currentlyApplyingId;
-
-        // Set to true when AP progressive upgrades are applied so APUpdateManager
-        // can call UpdatePanelsVisibility() on the next frame to refresh the level
-        // counter display without rebuilding shopPanelDict.
-        public static bool ShopNeedsVisibilityRefresh = false;
 
         private const int JACKPOT_POINTS_PER_ITEM = 10; // Must match Python JACKPOT_POINTS_PER_ITEM
 
@@ -107,15 +106,29 @@ namespace ScritchyScratchyAP
             _appliedLevels.Clear();
             _loggedDeferrals.Clear();
             _loggedLocks.Clear();
-            ShopNeedsVisibilityRefresh = false;
             _luckyStreakTickets = 0;
             _unluckyStreakTickets = 0;
         }
+
+        // Set after a prestige so ApplyAll() skips itself for a few seconds
+        // regardless of what triggers it (periodic retry, TicketShop/UpgradeShop
+        // PopulateShop postfixes). The game's own PerkManager and UpgradeShop
+        // take a moment to finish rebuilding their internal state after prestige,
+        // and calling ActivatePerk() or ApplyUpgrade() before they're ready throws
+        // a NullReferenceException inside the game's own code (PerkManager.
+        // SetUpgradeStartingCount, UpgradeShop.UpdatePanelsVisibility). These get
+        // caught and don't crash the game, but the attempt silently fails and
+        // stats don't apply until the next retry, so it's better to just not try
+        // until the game has had a moment to settle.
+        private static float _suppressApplyUntil = 0f;
+        public static void SuppressApplyFor(float seconds) => _suppressApplyUntil = Time.time + seconds;
 
         // Re-applies shop items from saved counts, called on shop load.
         // Cash injections and traps are intentionally excluded.
         public static void ApplyAll()
         {
+            if (Time.time < _suppressApplyUntil) return;
+
             var counts = TrackingManager.GetReceivedItemCounts();
             if (counts.Count == 0) return;
 
@@ -263,10 +276,14 @@ namespace ScritchyScratchyAP
                     ApplyPrestigePerkProgressive(upgradeId, totalReceived);
                 else if (upgradeId == "Prestige")
                     { /* no-op: Progressive Prestige is a locked item earned by prestiging */ }
-                else if (upgradeId.StartsWith("Scratch Size "))
-                    ApplyShopUpgradeToLevel(upgradeId, totalReceived);
                 else
-                    ApplyProgressiveUpgrade(upgradeId, totalReceived);
+                    // Every progressive shop upgrade (Scratch Luck, Scratch Size, Scratch Bot
+                    // Speed/Capacity/Strength, Timer Capacity/Charge, Fan Speed/Battery, Mundo
+                    // Speed, Spell Charge Speed, Buying Speed, Warp Speed) is gate-only: receiving
+                    // the item unlocks the ability to manually buy that level for real, it never
+                    // applies the stat itself. Patch_ShopTryBuy/Patch_ShopBuy already gate and
+                    // track every one of these identically regardless of which panel it is.
+                    ApplyShopUpgradeToLevel(upgradeId, totalReceived);
             }
             else
             {
@@ -438,62 +455,21 @@ namespace ScritchyScratchyAP
             }
         }
 
-        // Shop upgrades (single-purchase, Scratch Size, and progressive)
-        // Calls ShopPanel.Buy() with the tracking suppress flag active.
-        // AP items are free. Saves the wallet balance before buying and
-        // restores it after so the player's money is unaffected.
+        // Progressive shop upgrades are gate-only: the AP item never touches the real
+        // stat, it only records the level AP has granted so Patch_ShopTryBuy's Prefix
+        // knows how far the player is allowed to manually buy. The stat itself, the
+        // displayed level counter, and the price counter are all only ever advanced
+        // by the player's own real Buy() click going through the normal purchase flow,
+        // exactly like a single-purchase upgrade. This avoids relying on the game's
+        // ApplyUpgrade()/UpgradeShop/PerkManager internals being ready at an arbitrary
+        // moment after connecting or prestiging, since nothing here touches them.
         private static void ApplyShopUpgradeToLevel(string upgradeId, int targetLevel)
         {
-            // ApplyUpgrade() does not affect Scratch Size panels. The stat doesn't change.
-            // Mark the AP level so ApplyAll() doesn't retry on every cycle.
-            // The player's manual Buy() clicks are what actually apply the stat and advance the counter
             _appliedLevels.TryGetValue(upgradeId, out int currentApplied);
             if (currentApplied >= targetLevel) return;
 
             _appliedLevels[upgradeId] = targetLevel;
-            Plugin.Log.LogInfo($"AP ItemApplicator: Scratch Size '{upgradeId}' AP level marked at {targetLevel} (stat applies on player buy)");
-        }
-
-        // Progressive upgrades use ApplyUpgrade() directly instead of Buy() so that
-        // the purchase-price counter is never incremented. This keeps the cost of the
-        // player's first manual buy at the base level-1 price regardless of how many
-        // AP levels have been pre-applied.
-        private static void ApplyProgressiveUpgrade(string upgradeId, int targetLevel)
-        {
-            var shop = UnityEngine.Object.FindObjectOfType<UpgradeShop>(true);
-            if (shop == null)
-            {
-                Plugin.Log.LogWarning($"AP ItemApplicator: UpgradeShop not found, deferring '{upgradeId}'");
-                return;
-            }
-            if (!shop.shopPanelDict.ContainsKey(upgradeId))
-            {
-                Plugin.Log.LogWarning($"AP ItemApplicator: No ShopPanel for '{upgradeId}'");
-                return;
-            }
-
-            _appliedLevels.TryGetValue(upgradeId, out int currentApplied);
-            if (currentApplied >= targetLevel) return;
-
-            _appliedLevels[upgradeId] = targetLevel;
-
-            Plugin.Log.LogInfo($"AP ItemApplicator: '{upgradeId}' {currentApplied} -> {targetLevel} (ApplyUpgrade, no cost inflation)");
-            TrackingManager.IsApplyingReceivedItem = true;
-            try
-            {
-                for (int i = currentApplied; i < targetLevel; i++)
-                    shop.ApplyUpgrade(upgradeId);
-                Plugin.Log.LogInfo($"AP ItemApplicator: '{upgradeId}' applied to level {targetLevel}");
-                ShopNeedsVisibilityRefresh = true;
-            }
-            catch (Exception ex)
-            {
-                Plugin.Log.LogError($"AP ItemApplicator: ApplyUpgrade threw for '{upgradeId}': {ex.Message}");
-            }
-            finally
-            {
-                TrackingManager.IsApplyingReceivedItem = false;
-            }
+            Plugin.Log.LogInfo($"AP ItemApplicator: '{upgradeId}' AP level marked at {targetLevel} (stat applies on player buy)");
         }
 
         // Ticket unlocks

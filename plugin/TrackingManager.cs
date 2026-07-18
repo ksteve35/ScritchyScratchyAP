@@ -312,6 +312,17 @@ namespace ScritchyScratchyAP
         {
             try
             {
+                // The cycle-level clear must happen unconditionally on any prestige,
+                // manual or Final-Chance-forced. The game always resets progressive
+                // stats/levels regardless of whether we can identify which "Prestige N"
+                // check to send below. Previously both were gated behind the same
+                // saveData/prestigeCount validity check, so if this fired before
+                // SaveData.Current.prestigeCount had actually been incremented by the
+                // game, the clear silently never ran and cycle levels stayed stale.
+                _data.ProgressiveCycleLevels.Clear();
+                Plugin.Log.LogInfo("AP Tracking: Prestige - cleared progressive upgrade cycle levels.");
+                Save();
+
                 var saveData = SaveData.Current;
                 if (saveData == null) return;
                 int count = saveData.prestigeCount;
@@ -319,9 +330,6 @@ namespace ScritchyScratchyAP
                 string locationName = $"Prestige {count}";
                 Plugin.Log.LogInfo($"AP Tracking: Prestige #{count} - checking '{locationName}'");
                 TrySendCheck(locationName);
-                _data.ProgressiveCycleLevels.Clear();
-                Plugin.Log.LogInfo("AP Tracking: Prestige - cleared progressive upgrade cycle levels.");
-                Save();
             }
             catch (Exception e)
             {

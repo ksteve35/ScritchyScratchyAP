@@ -297,7 +297,45 @@ namespace ScritchyScratchyAP
     {
         static void Postfix()
         {
-            APUpdateManager.Enqueue(() => TrackingManager.OnPrestige());
+            APUpdateManager.Enqueue(() =>
+            {
+                TrackingManager.OnPrestige();
+                // The game resets progressive stats (Scratch Luck, Scratch Bot Strength, etc.)
+                // back on prestige, same as it resets their displayed shop level to 1.
+                // _appliedLevels doesn't know that happened, so without clearing it ApplyAll()
+                // would see "already applied to level N" and silently skip re-calling
+                // ApplyUpgrade(), permanently losing the AP-granted boost. Only clear the
+                // guard here, don't force ApplyAll()/LockUnapplied() yet, the game hasn't
+                // finished rebuilding its own shop/perk save data this soon after Prestige()
+                // returns. Even PopulateShop's own postfixes fire before PerkManager and
+                // UpgradeShop are fully rebuilt, so suppress ApplyAll() entirely for a short
+                // window no matter what triggers it, and let the periodic 3-second retry
+                // pick it up once the game has actually settled.
+                ItemApplicator.ResetAppliedLevels();
+                ItemApplicator.SuppressApplyFor(2f);
+            });
+        }
+    }
+
+    // A manual prestige triggered from the perk tree panel (spending accumulated
+    // JP to reset early, rather than dying to Final Chance) goes through this
+    // private method instead of PrestigeManager.Prestige(), so it never hit the
+    // patch above. ProgressiveCycleLevels never got cleared even though the
+    // game's own stats/levels did reset, silently desyncing our gating from
+    // real game state. Same postfix logic as Patch_Prestige; harmless if both
+    // ever fire for the same prestige (OnPrestige/ResetAppliedLevels are both
+    // idempotent).
+    [HarmonyPatch(typeof(PrestigePanel), "Prestige")]
+    public class Patch_PrestigePanelPrestige
+    {
+        static void Postfix()
+        {
+            APUpdateManager.Enqueue(() =>
+            {
+                TrackingManager.OnPrestige();
+                ItemApplicator.ResetAppliedLevels();
+                ItemApplicator.SuppressApplyFor(2f);
+            });
         }
     }
 

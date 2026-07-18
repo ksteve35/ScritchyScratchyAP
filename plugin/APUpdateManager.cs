@@ -118,17 +118,6 @@ namespace ScritchyScratchyAP
                 StartCoroutine(RightClickOpenAndCashOut().WrapToIl2Cpp());
             }
 
-            // When AP progressive items are applied the shop panel level counters
-            // won't update until the shop refreshes. UpdatePanelsVisibility() is safe
-            // to call externally, unlike PopulateShop which rebuilds shopPanelDict
-            // and crashes with a duplicate-key exception if called twice.
-            if (ItemApplicator.ShopNeedsVisibilityRefresh)
-            {
-                ItemApplicator.ShopNeedsVisibilityRefresh = false;
-                var shop = UnityEngine.Object.FindObjectOfType<UpgradeShop>(true);
-                shop?.UpdatePanelsVisibility();
-            }
-
             _shopApplyTimer -= Time.deltaTime;
             if (_shopApplyTimer <= 0f)
             {
