@@ -297,7 +297,18 @@ namespace ScritchyScratchyAP
     {
         static void Postfix()
         {
-            APUpdateManager.Enqueue(() => TrackingManager.OnPrestige());
+            APUpdateManager.Enqueue(() =>
+            {
+                TrackingManager.OnPrestige();
+                // The game resets progressive stats (Scratch Luck, Scratch Bot Strength, etc.)
+                // back on prestige, same as it resets their displayed shop level to 1.
+                // _appliedLevels doesn't know that happened, so without clearing it ApplyAll()
+                // would see "already applied to level N" and silently skip re-calling
+                // ApplyUpgrade(), permanently losing the AP-granted boost.
+                ItemApplicator.ResetAppliedLevels();
+                ItemApplicator.ApplyAll();
+                ItemApplicator.LockUnapplied();
+            });
         }
     }
 

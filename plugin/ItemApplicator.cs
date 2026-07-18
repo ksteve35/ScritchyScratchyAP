@@ -9,7 +9,11 @@ namespace ScritchyScratchyAP
     {
         // Tracks what levels have actually applied this session.
         // Keyed by upgrade/ticket name, value is the level applied (1 for single/ticket).
-        // Reset every connection so re-received items re-apply after prestige.
+        // Reset on connect/reconnect (ResetAppliedLevels) and on every prestige
+        // (Patch_Prestige.Postfix), since prestige resets the game's own progressive
+        // stats, just like it resets their displayed shop level to 1. Without the prestige
+        // reset, ApplyAll() would see "already applied to level N" and skip re-calling
+        // ApplyUpgrade(), permanently losing the AP-granted boost.
         private static readonly Dictionary<string, int> _appliedLevels = new();
 
         // Suppresses repeated "deferring X, predecessor Y not yet received" log lines.
