@@ -380,6 +380,35 @@ namespace ScritchyScratchyAP
             }
         }
 
+        // Reconciles local SentLocations against the server's own checked-locations
+        // set right after a successful connect. SendCheck fires CompleteLocationChecksAsync
+        // without waiting for confirmation, and SentLocations is marked immediately
+        // regardless of whether that call lands (server restart, generation reset,
+        // socket hiccup, etc.). If that happens, the location is permanently stuck.
+        // Locally we believe it's sent, so TrySendCheck's dedup silently no-ops forever,
+        // but the server never received it. Any locally-sent location the server doesn't
+        // have gets resent here so it self-heals on the next connect instead of staying
+        // stranded.
+        public static void ReconcileSentLocationsWithServer(ICollection<long> serverCheckedLocationIds)
+        {
+            if (_data.SentLocations.Count == 0) return;
+
+            int resent = 0;
+            foreach (var locationName in _data.SentLocations)
+            {
+                long? locationId = Locations.GetLocationId(locationName);
+                if (locationId == null) continue;
+                if (serverCheckedLocationIds.Contains(locationId.Value)) continue;
+
+                Plugin.Log.LogWarning($"AP: '{locationName}' was marked sent locally but the server doesn't have it checked - resending.");
+                ArchipelagoManager.SendCheck(locationId.Value);
+                resent++;
+            }
+
+            if (resent > 0)
+                Plugin.Log.LogInfo($"AP: Reconciliation resent {resent} location(s) the server was missing.");
+        }
+
         // Core Check Sender
         public static void TrySendCheck(string locationName)
         {
