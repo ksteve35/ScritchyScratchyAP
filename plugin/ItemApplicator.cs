@@ -490,6 +490,14 @@ namespace ScritchyScratchyAP
             ApplyScaledCash(100.0);
         }
 
+        // Testing shortcut for held Shift + F7's repeat-fire ticks. Grants
+        // {largeCashMultiplier}x a normal Large Cash Injection per tick, escalating
+        // as the key is held (see APUpdateManager's hold-timer logic).
+        public static void DebugGrantMegaCashInjection(double largeCashMultiplier)
+        {
+            ApplyScaledCash(100.0 * largeCashMultiplier);
+        }
+
         private static void ApplyCash(double amount)
         {
             var wallet = UnityEngine.Object.FindObjectOfType<PlayerWallet>();

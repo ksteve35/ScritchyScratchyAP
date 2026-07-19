@@ -19,6 +19,17 @@ namespace ScritchyScratchyAP
         // active, or before PopulateShop fired, eventually get applied.
         private float _shopApplyTimer = 3f;
 
+        // Shift + F7 hold-to-repeat: -1 while not held. Set to Time.time on initial
+        // press so the first repeat can be timed relative to it.
+        private float _f7HoldStartTime = -1f;
+        // Time.time of the next allowed repeat shot while held past the threshold.
+        private float _f7NextRepeatTime = 0f;
+        private const float F7_REPEAT_HOLD_THRESHOLD = 1f; // seconds held before repeating starts
+        private const float F7_REPEAT_INTERVAL = 0.1f;     // 10 shots/sec
+        private const double F7_REPEAT_START_MULTIPLIER = 100.0; // multiplier once repeating starts
+        private const float F7_REPEAT_ESCALATION_INTERVAL = 3f;  // seconds between escalations
+        private const double F7_REPEAT_ESCALATION_FACTOR = 20.0; // multiplier grows by this factor each escalation
+
         // Set in Awake so ConnectionGUI can trigger a reconnect
         // with new connection details via RequestReconnect below.
         private static APUpdateManager _instance;
@@ -94,10 +105,15 @@ namespace ScritchyScratchyAP
                 }
 
                 // F7: instantly grant the same amount a real "Small Cash Injection" item
-                // would (testing shortcut). Shift+F7 grants a "Large Cash Injection" instead.
+                // would (testing shortcut). Shift + F7 grants a "Large Cash Injection" instead.
+                // Holding Shift + F7 for over a second starts auto-firing 100x a Large Cash
+                // Injection, 10 times/sec, escalating by a further 20x every 3 seconds
+                // held, until either key is released.
                 if (kb.f7Key.wasPressedThisFrame)
                 {
                     bool shift = kb.leftShiftKey.isPressed || kb.rightShiftKey.isPressed;
+                    _f7HoldStartTime = Time.time;
+                    _f7NextRepeatTime = Time.time + F7_REPEAT_HOLD_THRESHOLD;
                     try
                     {
                         if (shift)
@@ -109,6 +125,29 @@ namespace ScritchyScratchyAP
                     {
                         Plugin.Log.LogError($"AP: F7 instant money failed: {ex.Message}");
                     }
+                }
+                else if (kb.f7Key.isPressed)
+                {
+                    bool shift = kb.leftShiftKey.isPressed || kb.rightShiftKey.isPressed;
+                    if (shift && _f7HoldStartTime >= 0f && Time.time >= _f7NextRepeatTime)
+                    {
+                        _f7NextRepeatTime = Time.time + F7_REPEAT_INTERVAL;
+                        double heldSeconds = Time.time - _f7HoldStartTime;
+                        int escalations = (int)(heldSeconds / F7_REPEAT_ESCALATION_INTERVAL);
+                        double multiplier = F7_REPEAT_START_MULTIPLIER * Math.Pow(F7_REPEAT_ESCALATION_FACTOR, escalations);
+                        try
+                        {
+                            ItemApplicator.DebugGrantMegaCashInjection(multiplier);
+                        }
+                        catch (Exception ex)
+                        {
+                            Plugin.Log.LogError($"AP: F7 repeat instant money failed: {ex.Message}");
+                        }
+                    }
+                }
+                else
+                {
+                    _f7HoldStartTime = -1f;
                 }
 
             }
