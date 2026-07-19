@@ -251,10 +251,10 @@ namespace ScritchyScratchyAP
             if (Array.IndexOf(Locations.SinglePurchaseUpgrades, upgradeId) >= 0)
                 AutoCompletePreviousScratchSize(upgradeId);
 
-            // All check-sending for manual upgrade clicks is handled by Patch_ShopBuy.Prefix.
-            // This method is only reached when Prefix lets the buy through:
-            //   - AP-applying an item (IsApplyingReceivedItem = true)
-            //   - Non-tracked ShopPanel buys (ticket purchases, Super tickets, etc.)
+            // All other check-sending for manual upgrade clicks is handled directly
+            // by Patch_ShopBuy.Postfix. This method is called for every real Buy(),
+            // tracked or not (ticket purchases, Super tickets, AP-applying an item, etc.),
+            // since auto-completing scratch size is the only thing it's responsible for.
         }
 
         // Achievements
@@ -378,6 +378,35 @@ namespace ScritchyScratchyAP
             {
                 Plugin.Log.LogError($"AP: Failed to set goal achieved: {e.Message}");
             }
+        }
+
+        // Reconciles local SentLocations against the server's own checked-locations
+        // set right after a successful connect. SendCheck fires CompleteLocationChecksAsync
+        // without waiting for confirmation, and SentLocations is marked immediately
+        // regardless of whether that call lands (server restart, generation reset,
+        // socket hiccup, etc.). If that happens, the location is permanently stuck.
+        // Locally we believe it's sent, so TrySendCheck's dedup silently no-ops forever,
+        // but the server never received it. Any locally-sent location the server doesn't
+        // have gets resent here so it self-heals on the next connect instead of staying
+        // stranded.
+        public static void ReconcileSentLocationsWithServer(ICollection<long> serverCheckedLocationIds)
+        {
+            if (_data.SentLocations.Count == 0) return;
+
+            int resent = 0;
+            foreach (var locationName in _data.SentLocations)
+            {
+                long? locationId = Locations.GetLocationId(locationName);
+                if (locationId == null) continue;
+                if (serverCheckedLocationIds.Contains(locationId.Value)) continue;
+
+                Plugin.Log.LogWarning($"AP: '{locationName}' was marked sent locally but the server doesn't have it checked - resending.");
+                ArchipelagoManager.SendCheck(locationId.Value);
+                resent++;
+            }
+
+            if (resent > 0)
+                Plugin.Log.LogInfo($"AP: Reconciliation resent {resent} location(s) the server was missing.");
         }
 
         // Core Check Sender

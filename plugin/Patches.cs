@@ -20,22 +20,8 @@ namespace ScritchyScratchyAP
         }
     }
 
-    // Shared pending-check state between Patch_ShopTryBuy and Patch_ShopBuy.
-    internal static class ShopBuyPending
-    {
-        public static bool IsManualProgressiveBuy;
-        public static string PendingCheck;
-        public static string PendingApId;
-
-        public static void Clear()
-        {
-            IsManualProgressiveBuy = false;
-            PendingCheck = null;
-            PendingApId = null;
-        }
-    }
-
-    // Fires when the player clicks a shop button.
+    // Fires when the player clicks a shop button. Only gates/blocks, never stages
+    // data for Patch_ShopBuy.Postfix to consume.
     [HarmonyPatch(typeof(ShopPanel), nameof(ShopPanel.TryBuy))]
     public class Patch_ShopTryBuy
     {
@@ -92,21 +78,6 @@ namespace ScritchyScratchyAP
                 }
                 // Let TryBuy run, it handles the real affordability check and deduction
                 // itself. Once granted by AP, "Unlock X" authorizes the purchase for good.
-                // Coins/upgrades reset to unbought on prestige and must be re-purchased
-                // with currency each time. We only resend the AP check the first time,
-                // checking IsLocationSent here (not above) would otherwise permanently
-                // block every future re-buy after the first prestige, since the location
-                // stays "sent" forever.
-                string checkName = $"Buy {id}";
-                if (!TrackingManager.IsLocationSent(checkName))
-                {
-                    ShopBuyPending.PendingCheck = checkName;
-                    Plugin.Log.LogInfo($"AP ShopBuy: single-purchase '{id}' - letting TryBuy run, check='{checkName}'");
-                }
-                else
-                {
-                    Plugin.Log.LogInfo($"AP ShopBuy: single-purchase '{id}' - check already sent, letting TryBuy run without resending (post-prestige re-buy)");
-                }
                 return true;
             }
 
@@ -153,43 +124,19 @@ namespace ScritchyScratchyAP
                     return false;
                 }
 
-                string levelCheck = $"Buy {apId} Level {cycleLevel}";
-
-                ShopBuyPending.PendingApId = apId;
-                ShopBuyPending.IsManualProgressiveBuy = true;
-                if (!TrackingManager.IsLocationSent(levelCheck))
-                {
-                    ShopBuyPending.PendingCheck = levelCheck;
-                    Plugin.Log.LogInfo($"AP ShopBuy: manual progressive buy - id='{id}' apId='{apId}' cycleLevel={cycleLevel} check='{levelCheck}'");
-                }
-                else
-                {
-                    ShopBuyPending.PendingCheck = null;
-                    Plugin.Log.LogInfo($"AP ShopBuy: manual progressive buy - id='{id}' apId='{apId}' cycleLevel={cycleLevel} already sent, no resend (post-prestige re-buy)");
-                }
                 return true;
             }
 
             return true;
         }
-
-        // TryBuy can still fail on its own from insufficient funds even after gating lets it
-        // through. When it does, Buy() is never reached, so clear any pending state here to
-        // stop it leaking into an unrelated later purchase.
-        static void Postfix(ShopPanel __instance, bool __result)
-        {
-            if (!__result)
-            {
-                if (ShopBuyPending.PendingCheck != null)
-                    Plugin.Log.LogInfo($"AP ShopBuy: TryBuy declined for '{__instance.Data.id}' (insufficient funds) - clearing pending check.");
-                ShopBuyPending.Clear();
-            }
-        }
     }
 
     // Fires only once TryBuy's own real affordability check and deduction already
     // succeeded, so no wallet manipulation needed, just send the check and mark
-    // the level applied.
+    // the level applied. Everything is recomputed here from the ShopPanel this
+    // specific call fired on, rather than relying on state staged by
+    // Patch_ShopTryBuy.Prefix, so overlapping rapid-fire purchases can't ruin
+    // each other's check.
     [HarmonyPatch(typeof(ShopPanel), nameof(ShopPanel.Buy))]
     public class Patch_ShopBuy
     {
@@ -200,37 +147,33 @@ namespace ScritchyScratchyAP
             if (TrackingManager.IsApplyingReceivedItem && postfixId == ItemApplicator.CurrentlyApplyingId)
                 return;
 
-            if (ShopBuyPending.IsManualProgressiveBuy)
+            // Progressive multi-level upgrades (includes Scratch Size)
+            string apId = postfixId.Replace("Scratch Size_", "Scratch Size ");
+            foreach (var (upgradeId, max) in Locations.MultiLevelUpgrades)
             {
-                string check = ShopBuyPending.PendingCheck;
-                string apId = ShopBuyPending.PendingApId;
-                ShopBuyPending.Clear();
-                // Check is null when this cycle's level was already sent in an earlier
-                // prestige cycle. The purchase still happened (currency spent, level advanced)
-                // but there's no new AP check to award.
-                if (check != null)
-                {
-                    TrackingManager.TrySendCheck(check);
-                    Plugin.Log.LogInfo($"AP: Check '{check}' sent (progressive upgrade)");
-                }
+                if (upgradeId != apId) continue;
+
                 int newCycleLevel = TrackingManager.IncrementProgressiveCycleLevel(apId);
-                Plugin.Log.LogInfo($"AP: '{apId}' cycle level now {newCycleLevel}");
+                if (newCycleLevel > max) newCycleLevel = max;
+                string levelCheck = $"Buy {apId} Level {newCycleLevel}";
+                TrackingManager.TrySendCheck(levelCheck);
+                Plugin.Log.LogInfo($"AP: Check '{levelCheck}' sent (progressive upgrade), cycle level now {newCycleLevel}");
                 ItemApplicator.TrackManualApply(apId);
                 return;
             }
 
-            if (ShopBuyPending.PendingCheck != null)
+            // Single-purchase shop upgrades. We only resend the AP check the first
+            // time, TrySendCheck already dedupes via SentLocations, so post-prestige
+            // re-buys of the same upgrade are safe to call unconditionally.
+            if (Array.IndexOf(Locations.SinglePurchaseUpgrades, postfixId) >= 0)
             {
-                string check = ShopBuyPending.PendingCheck;
-                ShopBuyPending.Clear();
+                string check = $"Buy {postfixId}";
                 TrackingManager.TrySendCheck(check);
                 Plugin.Log.LogInfo($"AP: Check '{check}' sent (single-purchase upgrade)");
-                // Auto-completes the previous coin tier's Scratch Size checks so they
-                // don't get permanently softlocked.
-                TrackingManager.OnUpgradePurchased(postfixId, __0);
-                return;
             }
 
+            // Auto-completes the previous coin tier's Scratch Size checks so they
+            // don't get permanently softlocked. No-op for non-tracked buys (Day Job).
             TrackingManager.OnUpgradePurchased(postfixId, __0);
         }
     }
