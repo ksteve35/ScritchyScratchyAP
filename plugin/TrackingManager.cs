@@ -251,10 +251,10 @@ namespace ScritchyScratchyAP
             if (Array.IndexOf(Locations.SinglePurchaseUpgrades, upgradeId) >= 0)
                 AutoCompletePreviousScratchSize(upgradeId);
 
-            // All check-sending for manual upgrade clicks is handled by Patch_ShopBuy.Prefix.
-            // This method is only reached when Prefix lets the buy through:
-            //   - AP-applying an item (IsApplyingReceivedItem = true)
-            //   - Non-tracked ShopPanel buys (ticket purchases, Super tickets, etc.)
+            // All other check-sending for manual upgrade clicks is handled directly
+            // by Patch_ShopBuy.Postfix. This method is called for every real Buy(),
+            // tracked or not (ticket purchases, Super tickets, AP-applying an item, etc.),
+            // since auto-completing scratch size is the only thing it's responsible for.
         }
 
         // Achievements

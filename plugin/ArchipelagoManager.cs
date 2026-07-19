@@ -105,6 +105,10 @@ namespace ScritchyScratchyAP
             {
                 Connected = true;
                 Plugin.Log.LogInfo($"AP: Successfully connected as {slotName}!");
+                // Self-heal any location we believe we've sent but the server doesn't
+                // actually have checked (server restart/regenerate, socket hiccup on
+                // an earlier send, etc.)
+                TrackingManager.ReconcileSentLocationsWithServer(Session.Locations.AllLocationsChecked);
                 return "";
             }
             else
